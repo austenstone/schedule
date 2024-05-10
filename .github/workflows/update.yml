@@ -1,0 +1,22 @@
+name: Auto Update Dependencies
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+
+      - run: npx npm-check-updates -u
+      - run: npm i
+      - run: npm audit fix
+      - run: npm run build
+
+      - uses: stefanzweifel/git-auto-commit-action@v5

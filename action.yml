@@ -1,0 +1,16 @@
+name: TypeScript Action
+author: Austen Stone
+description: A TypeScript Action
+branding:
+  icon: "plus"
+  color: "blue"
+
+inputs:
+  github-token:
+    description: The GitHub token used to create an authenticated client
+    default: ${{ github.token }}
+    required: false
+
+runs:
+  using: "node20"
+  main: "dist/index.js"
