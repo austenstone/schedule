@@ -35,7 +35,9 @@ export const run = async (): Promise<void> => {
     repo: inputs.repo,
   };
   const octokit = getOctokit(inputs.token);
-  const inputDate = parseDate(inputs.date);
+  const inputDate = parseDate(inputs.date, undefined, {
+    forwardDate: true
+  });
   const variablePrefix = '_SCHEDULE'
   const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
     .find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);

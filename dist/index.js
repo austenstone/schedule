@@ -29173,7 +29173,9 @@ const run = async () => {
         repo: inputs.repo,
     };
     const octokit = (0, github_1.getOctokit)(inputs.token);
-    const inputDate = (0, chrono_node_1.parseDate)(inputs.date);
+    const inputDate = (0, chrono_node_1.parseDate)(inputs.date, undefined, {
+        forwardDate: true
+    });
     const variablePrefix = '_SCHEDULE';
     const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
         .find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
