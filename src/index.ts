@@ -1,4 +1,4 @@
-import { getInput, info, setOutput } from "@actions/core";
+import { getInput, info } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import { parseDate } from 'chrono-node'
 
@@ -53,6 +53,7 @@ export const run = async (): Promise<void> => {
   }
   const workflowId = workflow?.id;
   const variableName = (date: Date) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
+
   switch (context.eventName) {
     case 'push':
     case 'schedule':
@@ -62,7 +63,6 @@ export const run = async (): Promise<void> => {
       } = await octokit.rest.actions.listRepoVariables(ownerRepo);
       const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
         const parts = variable.name.split('_');
-        console.log(parts);
         return {
           variableName: variable.name,
           workflow_id: parts[2],
@@ -70,31 +70,24 @@ export const run = async (): Promise<void> => {
           ref: variable.value
         }
       });
-      info(`📅 Found ${schedules.length} scheduled workflows:
-${schedules.map((schedule) => `${dateTimeFormatter.format(schedule.date)} - ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
+      info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) =>
+        `${dateTimeFormatter.format(schedule.date)} - ${schedule.workflow_id} ${schedule.ref}`
+      ).join('\n')}`);
       if (!schedules.length) break;
       let timeElapsed = 0;
       do {
         for (const [index, schedule] of schedules.entries()) {
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
           info(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
-          setOutput('ref', schedule.ref);
-          setOutput('date', schedule.date.valueOf());
-          setOutput('result', 'true');
           await octokit.rest.actions.createWorkflowDispatch({
             ...ownerRepo,
             workflow_id: schedule.workflow_id,
             ref: schedule.ref,
           });
-          try {
-            await octokit.rest.actions.deleteRepoVariable({
-              ...ownerRepo,
-              name: schedule.variableName,
-            });
-          } catch (error) {
-            info(`❌ Failed to delete variable ${schedule.variableName}`);
-            console.error(JSON.stringify(error, null, 2));
-          }
+          await octokit.rest.actions.deleteRepoVariable({
+            ...ownerRepo,
+            name: schedule.variableName,
+          });
           schedules.splice(index, 1);
         }
         if (inputs.waitMs > 0) {
@@ -115,8 +108,9 @@ ${schedules.map((schedule) => `${dateTimeFormatter.format(schedule.date)} - ${sc
         info(`✅ Scheduled!`);
       }
       break;
+    case 'push':
     default:
-      setOutput('result', 'true');
+      info(`⏩ Nothing to see here...`)
       break;
   }
 };
