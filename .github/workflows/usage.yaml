@@ -12,10 +12,6 @@ jobs:
       repository-projects: write
     runs-on: ubuntu-latest
     steps:
-      - run: gh variable set MYVARIABLE --body "$ENV_VALUE"
-        env:
-          ENV_VALUE: "my value"
-          GH_TOKEN: ${{ github.token }}
       - name: Generate token
         id: generate-token
         uses: actions/create-github-app-token@v1
@@ -23,6 +19,10 @@ jobs:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_PEM }}
       - uses: actions/checkout@v4
+      - run: gh variable set MYVARIABLE --body "$ENV_VALUE"
+        env:
+          ENV_VALUE: "my value"
+          GH_TOKEN: ${{ github.token }}
       - uses: ./
         with:
           github-token: ${{ secrets.TOKEN }}
