@@ -1,5 +1,6 @@
 import { getInput, info } from "@actions/core";
 import { getOctokit } from "@actions/github";
+import { getProjects } from "./projects";
 
 interface Input {
   token: string;
@@ -34,39 +35,12 @@ export const run = async (): Promise<void> => {
 
   try {
     info(`Getting projects for ${input.owner}/${input.repo}`)
-    const { data: projects } = await octokit.rest.projects.listForRepo(ownerRepo);
-    info(JSON.stringify(projects, null, 2));
-    const project = projects.find((project) => project.name === input.projectName);
-    if (!project) {
-      throw new Error(`Project ${input.projectName} not found`);
-    }
-    info(`Project ID: ${project.id}`);
-
-    const { data: columns } = await octokit.rest.projects.listColumns({
-      project_id: project.id,
-    });
-    const column = columns.find((column) => column.name === "To do");
-    if (!column) {
-      throw new Error(`Column To do not found`);
-    }
+    const projects = getProjects(octokit, ownerRepo.owner, ownerRepo.repo, input.projectName);
+    console.log(JSON.stringify(projects, null, 2));
   } catch (error) {
     if (error instanceof Error) {
-      info(JSON.stringify(error, null, 2));
+      info(`Error: ${error.message}`);
     }
-  }
-  const { data: projects } = await octokit.rest.projects.listForRepo(ownerRepo);
-  const project = projects.find((project) => project.name === input.projectName);
-  if (!project) {
-    throw new Error(`Project ${input.projectName} not found`);
-  }
-  info(`Project ID: ${project.id}`);
-
-  const { data: columns } = await octokit.rest.projects.listColumns({
-    project_id: project.id,
-  });
-  const column = columns.find((column) => column.name === "To do");
-  if (!column) {
-    throw new Error(`Column To do not found`);
   }
 };
 

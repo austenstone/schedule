@@ -29133,6 +29133,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core_1 = __nccwpck_require__(2186);
 const github_1 = __nccwpck_require__(5438);
+const projects_1 = __nccwpck_require__(5827);
 const getInputs = () => {
     const result = {};
     result.token = (0, core_1.getInput)("github-token");
@@ -29157,42 +29158,49 @@ const run = async () => {
     };
     try {
         (0, core_1.info)(`Getting projects for ${input.owner}/${input.repo}`);
-        const { data: projects } = await octokit.rest.projects.listForRepo(ownerRepo);
-        (0, core_1.info)(JSON.stringify(projects, null, 2));
-        const project = projects.find((project) => project.name === input.projectName);
-        if (!project) {
-            throw new Error(`Project ${input.projectName} not found`);
-        }
-        (0, core_1.info)(`Project ID: ${project.id}`);
-        const { data: columns } = await octokit.rest.projects.listColumns({
-            project_id: project.id,
-        });
-        const column = columns.find((column) => column.name === "To do");
-        if (!column) {
-            throw new Error(`Column To do not found`);
-        }
+        const projects = (0, projects_1.getProjects)(octokit, ownerRepo.owner, ownerRepo.repo, input.projectName);
+        console.log(JSON.stringify(projects, null, 2));
     }
     catch (error) {
         if (error instanceof Error) {
-            (0, core_1.info)(JSON.stringify(error, null, 2));
+            (0, core_1.info)(`Error: ${error.message}`);
         }
-    }
-    const { data: projects } = await octokit.rest.projects.listForRepo(ownerRepo);
-    const project = projects.find((project) => project.name === input.projectName);
-    if (!project) {
-        throw new Error(`Project ${input.projectName} not found`);
-    }
-    (0, core_1.info)(`Project ID: ${project.id}`);
-    const { data: columns } = await octokit.rest.projects.listColumns({
-        project_id: project.id,
-    });
-    const column = columns.find((column) => column.name === "To do");
-    if (!column) {
-        throw new Error(`Column To do not found`);
     }
 };
 exports.run = run;
 (0, exports.run)();
+
+
+/***/ }),
+
+/***/ 5827:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getProjects = void 0;
+const getProjects = async (octokit, owner, repo, projectName) => {
+    return await octokit.graphql(`{
+    repository(owner: "${owner}", name: "${repo}") {
+      projectsV2(query: "name:${projectName}", first: 10) {
+        nodes {
+          id
+          title
+          fields(first: 20) {
+            nodes {
+              ... on ProjectV2Field {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    }
+  }`);
+};
+exports.getProjects = getProjects;
 
 
 /***/ }),
