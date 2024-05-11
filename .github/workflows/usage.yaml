@@ -17,9 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: gh variable set Schedule_123 --body "${{ github.ref }}" --verbose
+      - run: gh variable set Schedule_123 --body "${{ github.ref }}"
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GH_DEBUG: 1
       - uses: ./
         id: check
         with:
