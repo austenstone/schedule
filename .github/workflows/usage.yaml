@@ -13,18 +13,7 @@ on:
         default: '2024-05-11'
 
 jobs:
-  set-variable:
-    if: github.event.inputs.date
-    runs-on: ubuntu-latest
-    steps:
-      - run: gh variable set Schedule_${{ github.event.inputs.date }} --body "${{ github.ref }}"
-        env:
-          ENV_VALUE: "my value"
-          GH_TOKEN: ${{ secrets.TOKEN }}
   check-schedule:
-    if: github.event.inputs.date == ''
-    outputs:
-      result: ${{ steps.check.outputs.result }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,9 +22,10 @@ jobs:
         with:
           github-token: ${{ secrets.TOKEN }}
           date: 5/14/2024
+          wait-ms: 5000
   run:
     needs: check-schedule
-    if: needs.check-schedule.outputs.result == 'true'
+    if: ${{ needs.check-schedule.outputs.result == 'true'}}
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Hello, world!"
+      - run: echo "This is scheduled!"
