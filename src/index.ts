@@ -40,18 +40,9 @@ export const run = async (): Promise<void> => {
     case 'schedule':
       info(`👀 Checking for scheduled workflows...`);
       const {
-        variables
-      } = await (await fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
-        headers: GITHUB_HEADERS,
-      })).json();
-      // const {
-      //   data: { variables },
-      // } = await octokit.rest.actions.listRepoVariables(ownerRepo);
-      const schedules: {
-        workflow_id: number;
-        date: dayjs.Dayjs;
-        ref: string;
-      }[] = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
+        data: { variables },
+      } = await octokit.rest.actions.listRepoVariables(ownerRepo);
+      const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
         const parts = variable.name.split('_');
         console.log(parts);
         return {

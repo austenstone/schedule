@@ -21,7 +21,7 @@ jobs:
         id: check
         with:
           github-token: ${{ secrets.TOKEN }}
-          date: 5/14/2024
+          date: ${{ github.event.inputs.date }}
           wait-ms: 5000
   run:
     needs: check-schedule
