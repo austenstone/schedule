@@ -59,7 +59,8 @@ export const run = async (): Promise<void> => {
           ref: variable.value
         }
       });
-      info(`📅 Found ${schedules.length} scheduled workflows`)
+      info(`📅 Found ${schedules.length} scheduled workflows:
+${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
       if (!schedules.length) break;
       let timeElapsed = 0;
       do {

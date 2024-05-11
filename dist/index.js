@@ -29185,7 +29185,8 @@ const run = async () => {
                     ref: variable.value
                 };
             });
-            (0, core_1.info)(`📅 Found ${schedules.length} scheduled workflows`);
+            (0, core_1.info)(`📅 Found ${schedules.length} scheduled workflows:
+${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
             if (!schedules.length)
                 break;
             let timeElapsed = 0;
