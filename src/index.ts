@@ -1,6 +1,5 @@
 import { getInput, info, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
-import dayjs from 'dayjs'
 import { parseDate } from 'chrono-node'
 
 interface Input {
@@ -59,18 +58,18 @@ export const run = async (): Promise<void> => {
         return {
           variableName: variable.name,
           workflow_id: parts[2],
-          date: dayjs(+parts[3]),
+          date: +parts[3],
           ref: variable.value
         }
       });
       info(`📅 Found ${schedules.length} scheduled workflows:
-${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
+${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
       if (!schedules.length) break;
       let timeElapsed = 0;
       do {
         for (const [index, schedule] of schedules.entries()) {
           if (schedule.date.valueOf() < Date.now().valueOf()) continue;
-          info(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.format()}`);
+          info(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.toLocaleString()}`);
           setOutput('ref', schedule.ref);
           setOutput('date', schedule.date.valueOf());
           setOutput('result', 'true');

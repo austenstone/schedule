@@ -29139,18 +29139,14 @@ function wrappy (fn, cb) {
 /***/ }),
 
 /***/ 6144:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core_1 = __nccwpck_require__(2186);
 const github_1 = __nccwpck_require__(5438);
-const dayjs_1 = __importDefault(__nccwpck_require__(7401));
 const chrono_node_1 = __nccwpck_require__(810);
 const getInputs = () => {
     const result = {};
@@ -29195,12 +29191,12 @@ const run = async () => {
                 return {
                     variableName: variable.name,
                     workflow_id: parts[2],
-                    date: (0, dayjs_1.default)(+parts[3]),
+                    date: +parts[3],
                     ref: variable.value
                 };
             });
             (0, core_1.info)(`📅 Found ${schedules.length} scheduled workflows:
-${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
+${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
             if (!schedules.length)
                 break;
             let timeElapsed = 0;
@@ -29208,7 +29204,7 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
                 for (const [index, schedule] of schedules.entries()) {
                     if (schedule.date.valueOf() < Date.now().valueOf())
                         continue;
-                    (0, core_1.info)(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.format()}`);
+                    (0, core_1.info)(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.toLocaleString()}`);
                     (0, core_1.setOutput)('ref', schedule.ref);
                     (0, core_1.setOutput)('date', schedule.date.valueOf());
                     (0, core_1.setOutput)('result', 'true');
