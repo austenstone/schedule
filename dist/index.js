@@ -50272,16 +50272,13 @@ const run = async () => {
                 };
             });
             (0, core_1.info)(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
-                const interval = (0, date_fns_1.intervalToDuration)({ start: new Date(Date.now()), end: schedule.date });
-                const intervalString = Object.entries(interval).map(([key, value]) => `${value} ${key}`).join(', ');
-                return `${schedule.workflow_id}@${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}... ${intervalString}`;
+                return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`;
             }).join('\n')}`);
             if (!schedules.length)
                 break;
             let timeElapsed = 0;
             do {
                 for (const [index, schedule] of schedules.entries()) {
-                    (0, core_1.info)(`if ${Date.now().valueOf()} < ${schedule.date.valueOf()}`);
                     if (Date.now().valueOf() < schedule.date.valueOf())
                         continue;
                     (0, core_1.info)(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);

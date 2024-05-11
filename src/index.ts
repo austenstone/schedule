@@ -73,15 +73,12 @@ export const run = async (): Promise<void> => {
         }
       });
       info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
-        const interval = intervalToDuration({ start: new Date(Date.now()), end: schedule.date });
-        const intervalString = Object.entries(interval).map(([key, value]) => `${value} ${key}`).join(', ');
-        return `${schedule.workflow_id}@${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}... ${intervalString}`
+        return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
       }).join('\n')}`);
       if (!schedules.length) break;
       let timeElapsed = 0;
       do {
         for (const [index, schedule] of schedules.entries()) {
-          info(`if ${Date.now().valueOf()} < ${schedule.date.valueOf()}`);
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
           info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
           await octokit.rest.actions.createWorkflowDispatch({
