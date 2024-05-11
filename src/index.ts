@@ -96,7 +96,7 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
       break;
     case 'workflow_dispatch':
       if (inputDate) {
-        info(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${inputDate.toLocaleTimeString()}`);
+        info(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${inputDate.toLocaleString()}`);
         await octokit.rest.actions.createRepoVariable({
           ...ownerRepo,
           name: variableName(inputDate),
