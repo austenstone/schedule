@@ -1,5 +1,6 @@
-import { getInput, info } from "@actions/core";
+import { getInput, info, summary } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
+import { GitHub } from "@actions/github/lib/utils";
 import { parseDate } from 'chrono-node'
 import { intervalToDuration } from 'date-fns'
 
@@ -55,26 +56,28 @@ export const run = async (): Promise<void> => {
   }
   const workflowId = workflow?.id;
   const variableName = (date: Date) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
+  const getSchedules = async (octokit: InstanceType<typeof GitHub>, ownerRepo: { owner: string; repo: string; }) => {
+    info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
+    const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
+    const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
+      const parts = variable.name.split('_');
+      return {
+        variableName: variable.name,
+        workflow_id: parts[2],
+        date: new Date(+parts[3]),
+        ref: variable.value
+      }
+    });
+    info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
+      return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
+    }).join('\n')}`);
+    return schedules;
+  };
 
+  const schedules = await getSchedules(octokit, ownerRepo);
   switch (context.eventName) {
     case 'push':
     case 'schedule':
-      info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
-      const {
-        data: { variables },
-      } = await octokit.rest.actions.listRepoVariables(ownerRepo);
-      const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
-        const parts = variable.name.split('_');
-        return {
-          variableName: variable.name,
-          workflow_id: parts[2],
-          date: new Date(+parts[3]),
-          ref: variable.value
-        }
-      });
-      info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
-        return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
-      }).join('\n')}`);
       if (!schedules.length) break;
       let timeElapsed = 0;
       do {
@@ -115,6 +118,13 @@ export const run = async (): Promise<void> => {
       info(`⏩ Nothing to see here...`)
       break;
   }
+  summary
+    .addHeading('Scheduled Workflows')
+    .addTable([
+      [{ data: 'Workflow', header: true }, { data: 'Ref', header: true }, { data: 'Scheduled Date', header: true }],
+      ...schedules.map((schedule) => [schedule.workflow_id, schedule.ref, dateTimeFormatter.format(schedule.date)])
+    ])
+    .write();
 };
 
 run();
