@@ -119,7 +119,7 @@ export const run = async (): Promise<void> => {
       break;
   }
   await summary
-    .addHeading('Scheduled Workflows')
+    .addHeading(`Scheduled Workflows ${dateTimeFormatter.resolvedOptions().timeZoneName}`)
     .addTable([
       [{ data: 'Workflow', header: true }, { data: 'Scheduled Date', header: true }, { data: 'Ref', header: true }],
       ...schedules.map((schedule) => {
