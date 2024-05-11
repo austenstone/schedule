@@ -49,7 +49,7 @@ export const run = async (): Promise<void> => {
   switch (context.eventName) {
     case 'push':
     case 'schedule':
-      info(`👀 Checking for scheduled workflows...`);
+      info(`👀 Checking for scheduled workflows... It's currently ${new Date().toLocaleString()}`);
       const {
         data: { variables },
       } = await octokit.rest.actions.listRepoVariables(ownerRepo);
@@ -69,7 +69,7 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
       let timeElapsed = 0;
       do {
         for (const [index, schedule] of schedules.entries()) {
-          if (schedule.date.valueOf() < Date.now()) continue;
+          if (schedule.date.valueOf() < Date.now().valueOf()) continue;
           info(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.format()}`);
           setOutput('ref', schedule.ref);
           setOutput('date', schedule.date.valueOf());

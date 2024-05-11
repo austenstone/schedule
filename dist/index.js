@@ -29187,7 +29187,7 @@ const run = async () => {
     switch (github_1.context.eventName) {
         case 'push':
         case 'schedule':
-            (0, core_1.info)(`👀 Checking for scheduled workflows...`);
+            (0, core_1.info)(`👀 Checking for scheduled workflows... It's currently ${new Date().toLocaleString()}`);
             const { data: { variables }, } = await octokit.rest.actions.listRepoVariables(ownerRepo);
             const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
                 const parts = variable.name.split('_');
@@ -29206,7 +29206,7 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
             let timeElapsed = 0;
             do {
                 for (const [index, schedule] of schedules.entries()) {
-                    if (schedule.date.valueOf() < Date.now())
+                    if (schedule.date.valueOf() < Date.now().valueOf())
                         continue;
                     (0, core_1.info)(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.format()}`);
                     (0, core_1.setOutput)('ref', schedule.ref);
