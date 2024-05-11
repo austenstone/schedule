@@ -23,12 +23,16 @@ jobs:
           GH_TOKEN: ${{ secrets.TOKEN }}
   check-schedule:
     if: github.event.inputs.date == ''
+    outputs:
+      result: ${{ steps.check.outputs.result }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./
+        id: check
         with:
           github-token: ${{ secrets.TOKEN }}
+          date: 5/10/2024
   run:
     needs: check-schedule
     if: needs.check-schedule.outputs.result == 'true'
