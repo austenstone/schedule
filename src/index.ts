@@ -121,10 +121,10 @@ export const run = async (): Promise<void> => {
   await summary
     .addHeading(`Scheduled Workflows ${dateTimeFormatter.resolvedOptions().timeZoneName}`)
     .addTable([
-      [{ data: 'Workflow', header: true }, { data: 'Scheduled Date', header: true }, { data: 'Ref', header: true }],
+      [{ data: 'Workflow', header: true }, { data: 'Scheduled Date', header: true }, { data: 'Ref', header: true }, { data: 'Path', header: true }],
       ...schedules.map((schedule) => {
         const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
-        return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref];
+        return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref, _workflow?.path || 'unknown'];
       })
     ])
     .write();
