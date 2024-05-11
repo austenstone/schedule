@@ -50260,7 +50260,6 @@ const run = async () => {
     const workflowId = workflow?.id;
     const variableName = (date) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
     const getSchedules = async (octokit, ownerRepo) => {
-        (0, core_1.info)(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
         const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
         const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
             const parts = variable.name.split('_');
@@ -50271,20 +50270,22 @@ const run = async () => {
                 ref: variable.value
             };
         });
-        (0, core_1.info)(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
-            return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`;
-        }).join('\n')}`);
         return schedules;
     };
+    (0, core_1.info)(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
     const schedules = await getSchedules(octokit, ownerRepo);
+    (0, core_1.info)(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
+        return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`;
+    }).join('\n')}`);
     switch (github_1.context.eventName) {
         case 'push':
         case 'schedule':
             if (!schedules.length)
                 break;
-            let timeElapsed = 0;
             let _schedules = schedules;
+            const startTime = Date.now().valueOf();
             do {
+                (0, core_1.info)(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
                 for (const [index, schedule] of _schedules.entries()) {
                     if (Date.now().valueOf() < schedule.date.valueOf())
                         continue;
@@ -50304,9 +50305,8 @@ const run = async () => {
                 if (inputs.waitMs > 0) {
                     await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
                 }
-                timeElapsed += inputs.waitDelayMs;
                 _schedules = await getSchedules(octokit, ownerRepo);
-            } while (inputs.waitMs > timeElapsed && _schedules.length);
+            } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
             break;
         case 'workflow_dispatch':
             if (inputDate) {

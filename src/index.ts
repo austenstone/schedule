@@ -61,7 +61,6 @@ export const run = async (): Promise<void> => {
   const workflowId = workflow?.id;
   const variableName = (date: Date) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
   const getSchedules = async (octokit: InstanceType<typeof GitHub>, ownerRepo: { owner: string; repo: string; }) => {
-    info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
     const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
     const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
       const parts = variable.name.split('_');
@@ -75,6 +74,7 @@ export const run = async (): Promise<void> => {
     return schedules;
   };
 
+  info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
   const schedules = await getSchedules(octokit, ownerRepo);
   info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
     return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
@@ -84,8 +84,9 @@ export const run = async (): Promise<void> => {
     case 'schedule':
       if (!schedules.length) break;
       let _schedules = schedules;
-      let timeElapsed = 0;
+      const startTime = Date.now().valueOf();
       do {
+        info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
         for (const [index, schedule] of _schedules.entries()) {
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
           info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
@@ -104,9 +105,8 @@ export const run = async (): Promise<void> => {
         if (inputs.waitMs > 0) {
           await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
         }
-        timeElapsed += inputs.waitDelayMs;
         _schedules = await getSchedules(octokit, ownerRepo);
-      } while (inputs.waitMs > timeElapsed && _schedules.length);
+      } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
       break;
     case 'workflow_dispatch':
       if (inputDate) {
