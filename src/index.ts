@@ -6,6 +6,7 @@ interface Input {
   date: string;
   token: string;
   waitMs: number;
+  workflow: string;
 }
 
 const getInputs = (): Input => {
@@ -29,7 +30,8 @@ export const run = async (): Promise<void> => {
   const octokit = getOctokit(inputs.token);
   const inputDate = dayjs(inputs.date);
   const variablePrefix = '_SCHEDULE'
-  const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows.find((workflow) => workflow.name === context.workflow);
+  const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
+    .find((workflow) => workflow.path === inputs.workflow || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
   if (!workflow) {
     throw new Error(`Workflow ${context.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
   }
@@ -59,7 +61,6 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
       do {
         for (const [index, schedule] of schedules.entries()) {
           if (!dayjs().isAfter(schedule.date)) continue;
-          
           info(`🚀 Running ${context.workflow} with ref:${schedule.ref} set for ${schedule.date.format()}`);
           setOutput('ref', schedule.ref);
           setOutput('date', +schedule.date);

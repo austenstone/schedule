@@ -29164,7 +29164,8 @@ const run = async () => {
     const octokit = (0, github_1.getOctokit)(inputs.token);
     const inputDate = (0, dayjs_1.default)(inputs.date);
     const variablePrefix = '_SCHEDULE';
-    const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows.find((workflow) => workflow.name === github_1.context.workflow);
+    const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
+        .find((workflow) => workflow.path === inputs.workflow || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
     if (!workflow) {
         throw new Error(`Workflow ${github_1.context.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
     }
@@ -29198,6 +29199,11 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
                     (0, core_1.setOutput)('ref', schedule.ref);
                     (0, core_1.setOutput)('date', +schedule.date);
                     (0, core_1.setOutput)('result', 'true');
+                    await octokit.rest.actions.createWorkflowDispatch({
+                        ...ownerRepo,
+                        workflow_id: schedule.workflow_id,
+                        ref: schedule.ref,
+                    });
                     try {
                         await octokit.rest.actions.deleteRepoVariable({
                             ...ownerRepo,
