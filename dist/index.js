@@ -50251,8 +50251,8 @@ const run = async () => {
     });
     const durationString = (start, end) => Object.entries((0, date_fns_1.intervalToDuration)({ start, end })).map(([key, value]) => `${value} ${key}`).join(', ');
     const variablePrefix = '_SCHEDULE';
-    const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
-        .find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
+    const workflows = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows;
+    const workflow = workflows.find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
     if (!workflow) {
         throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
     }
@@ -50324,8 +50324,11 @@ const run = async () => {
     await core_1.summary
         .addHeading('Scheduled Workflows')
         .addTable([
-        [{ data: 'Workflow', header: true }, { data: 'Ref', header: true }, { data: 'Scheduled Date', header: true }],
-        ...schedules.map((schedule) => [schedule.workflow_id, schedule.ref, dateTimeFormatter.format(schedule.date)])
+        [{ data: 'Workflow', header: true }, { data: 'Scheduled Date', header: true }, { data: 'Ref', header: true }],
+        ...schedules.map((schedule) => {
+            const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
+            return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref];
+        })
     ])
         .write();
 };
