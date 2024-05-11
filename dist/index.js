@@ -29169,8 +29169,8 @@ const run = async () => {
         repo: inputs.repo,
     };
     const octokit = (0, github_1.getOctokit)(inputs.token);
-    const inputDate = (0, chrono_node_1.parseDate)(inputs.date, undefined, {
-        forwardDate: true
+    const inputDate = (0, chrono_node_1.parseDate)(inputs.date, {
+        timezone: 'UTC'
     });
     const variablePrefix = '_SCHEDULE';
     const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
@@ -29229,7 +29229,7 @@ ${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.wo
                     await (async () => await new Promise((resolve) => setTimeout(resolve, 1000)))();
                 }
                 timeElapsed += 1000;
-            } while (inputs.waitMs > timeElapsed);
+            } while (inputs.waitMs > timeElapsed && schedules.length);
             break;
         case 'workflow_dispatch':
             if (inputDate) {

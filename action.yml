@@ -33,6 +33,10 @@ inputs:
     description: 'Optional repository name to run the workflow on.'
     default: ${{ github.repository }}
     required: false
+  timezone:
+    description: 'Timezone to use for the schedule'
+    required: false
+    default: 'EST'
 
 runs:
   using: "node20"

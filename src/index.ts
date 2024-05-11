@@ -10,6 +10,7 @@ interface Input {
   waitMs: number;
   workflow: string;
   ref: string;
+  timezone: string;
 }
 
 const getInputs = (): Input => {
@@ -24,6 +25,8 @@ const getInputs = (): Input => {
   result.waitMs = parseInt(getInput("wait-ms"));
   result.workflow = getInput("workflow");
   result.ref = getInput("ref");
+  result.timezone = getInput("timezone");
+  
   return result;
 }
 
@@ -34,8 +37,8 @@ export const run = async (): Promise<void> => {
     repo: inputs.repo,
   };
   const octokit = getOctokit(inputs.token);
-  const inputDate = parseDate(inputs.date, undefined, {
-    forwardDate: true
+  const inputDate = parseDate(inputs.date, {
+    timezone: inputs.timezone || 'UTC'
   });
   const variablePrefix = '_SCHEDULE'
   const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
@@ -93,7 +96,7 @@ ${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.wo
           await (async () => await new Promise((resolve) => setTimeout(resolve, 1000)))();
         }
         timeElapsed += 1000;
-      } while (inputs.waitMs > timeElapsed)
+      } while (inputs.waitMs > timeElapsed && schedules.length);
       break;
     case 'workflow_dispatch':
       if (inputDate) {
