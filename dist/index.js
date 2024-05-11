@@ -50248,6 +50248,7 @@ const run = async () => {
         timeStyle: 'full',
         timeZone: inputs.timezone || 'UTC'
     });
+    const durationString = (start, end) => Object.entries((0, date_fns_1.intervalToDuration)({ start, end })).map(([key, value]) => `${value} ${key}`).join(', ');
     const variablePrefix = '_SCHEDULE';
     const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
         .find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
@@ -50310,7 +50311,7 @@ const run = async () => {
                     name: variableName(inputDate),
                     value: inputs.ref,
                 });
-                (0, core_1.info)(`✅ Scheduled!`);
+                (0, core_1.info)(`✅ Scheduled to run in ${durationString(new Date(Date.now()), inputDate)}!`);
             }
             break;
         case 'push':

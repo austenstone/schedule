@@ -46,6 +46,7 @@ export const run = async (): Promise<void> => {
     timeStyle: 'full',
     timeZone: inputs.timezone || 'UTC'
   });
+  const durationString = (start: Date, end: Date) => Object.entries(intervalToDuration({ start, end })).map(([key, value]) => `${value} ${key}`).join(', ');
   const variablePrefix = '_SCHEDULE'
   const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
     .find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
@@ -109,7 +110,7 @@ export const run = async (): Promise<void> => {
           name: variableName(inputDate),
           value: inputs.ref,
         });
-        info(`✅ Scheduled!`);
+        info(`✅ Scheduled to run in ${durationString(new Date(Date.now()), inputDate)}!`);
       }
       break;
     case 'push':
