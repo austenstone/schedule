@@ -29179,6 +29179,7 @@ const run = async () => {
                 const parts = variable.name.split('_');
                 console.log(parts);
                 return {
+                    variableName: variable.name,
                     workflow_id: parts[2],
                     date: (0, dayjs_1.default)(+parts[3]),
                     ref: variable.value
@@ -29196,14 +29197,9 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
                         (0, core_1.setOutput)('ref', schedule.ref);
                         (0, core_1.setOutput)('date', +schedule.date);
                         (0, core_1.setOutput)('result', 'true');
-                        await octokit.rest.actions.createWorkflowDispatch({
-                            ...ownerRepo,
-                            workflow_id: schedule.workflow_id,
-                            ref: schedule.ref,
-                        });
                         await octokit.rest.actions.deleteRepoVariable({
                             ...ownerRepo,
-                            name: variableName(schedule.date),
+                            name: schedule.variableName,
                         });
                     }
                 }
