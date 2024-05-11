@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   schedule:
+    name: 📅 Schedule
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
