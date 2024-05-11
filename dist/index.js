@@ -29191,7 +29191,7 @@ const run = async () => {
                 return {
                     variableName: variable.name,
                     workflow_id: parts[2],
-                    date: +parts[3],
+                    date: new Date(+parts[3]),
                     ref: variable.value
                 };
             });
