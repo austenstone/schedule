@@ -2,6 +2,8 @@ name: Usage
 on:
   push:
   pull_request:
+  schedule:
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       date:
@@ -11,23 +13,19 @@ on:
         default: '2024-05-11'
 
 jobs:
-  run:
+  set-variable:
+    if: github.event.inputs.date
     runs-on: ubuntu-latest
     steps:
-      - name: Generate token
-        id: generate-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PEM }}
-      - uses: actions/checkout@v4
-      - run: gh variable list
-        env:
-          GH_TOKEN: ${{ secrets.TOKEN }}
-      - run: gh variable set MYVARIABLE --body "$ENV_VALUE"
+      - run: gh variable set Schedule_${{ github.event.inputs.date }} --body "${{ github.ref }}"
         env:
           ENV_VALUE: "my value"
           GH_TOKEN: ${{ secrets.TOKEN }}
       - uses: ./
         with:
           github-token: ${{ secrets.TOKEN }}
+  run:
+    if: !github.event.inputs.date
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello, world!"
