@@ -29202,8 +29202,7 @@ ${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.wo
             let timeElapsed = 0;
             do {
                 for (const [index, schedule] of schedules.entries()) {
-                    (0, core_1.info)(`if (${Date.now().valueOf()} > ${schedule.date.valueOf()}) continue;`);
-                    if (Date.now().valueOf() > schedule.date.valueOf())
+                    if (Date.now().valueOf() < schedule.date.valueOf())
                         continue;
                     (0, core_1.info)(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.toLocaleString()}`);
                     (0, core_1.setOutput)('ref', schedule.ref);
