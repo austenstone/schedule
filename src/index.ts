@@ -1,4 +1,4 @@
-import { getBooleanInput, getInput, setOutput } from "@actions/core";
+import { getInput, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import dayjs from 'dayjs'
 
