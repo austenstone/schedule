@@ -50259,7 +50259,7 @@ const run = async () => {
     }
     const workflowId = workflow?.id;
     const variableName = (date) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
-    const getSchedules = async (octokit, ownerRepo) => {
+    const getSchedules = async () => {
         const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
         const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
             const parts = variable.name.split('_');
@@ -50272,58 +50272,69 @@ const run = async () => {
         });
         return schedules;
     };
+    const scheduleAdd = async () => {
+        if (!inputDate)
+            return;
+        (0, core_1.info)(`🔍 You entered '${inputs.date}' which I assume is '${dateTimeFormatter.format(inputDate)}' your time (${inputs.timezone})`);
+        (0, core_1.info)(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
+        return octokit.rest.actions.createRepoVariable({
+            ...ownerRepo,
+            name: variableName(inputDate),
+            value: inputs.ref,
+        }).then(() => {
+            (0, core_1.info)(`✅ Scheduled to run in ${durationString(new Date(), inputDate)}!`);
+        });
+    };
+    const scheduleRun = async () => new Promise(async (resolve) => {
+        let _schedules = await getSchedules();
+        (0, core_1.info)(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
+        (0, core_1.info)(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
+            return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`;
+        }).join('\n')}`);
+        const startTime = Date.now().valueOf();
+        do {
+            (0, core_1.info)(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
+            for (const [index, schedule] of _schedules.entries()) {
+                if (Date.now().valueOf() < schedule.date.valueOf())
+                    continue;
+                (0, core_1.info)(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
+                await octokit.rest.actions.createWorkflowDispatch({
+                    ...ownerRepo,
+                    workflow_id: schedule.workflow_id,
+                    ref: schedule.ref,
+                    inputs: inputs.inputs ? JSON.parse(inputs.inputs) : undefined
+                });
+                await octokit.rest.actions.deleteRepoVariable({
+                    ...ownerRepo,
+                    name: schedule.variableName,
+                });
+                _schedules.splice(index, 1);
+            }
+            if (inputs.waitMs > 0) {
+                await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
+            }
+            _schedules = await getSchedules();
+        } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
+        (0, core_1.info)(`😪 No more workflows to run. I'll try again next time...`);
+        resolve(null);
+    });
     switch (github_1.context.eventName) {
-        case 'push':
         case 'schedule':
-            let _schedules = await getSchedules(octokit, ownerRepo);
-            (0, core_1.info)(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
-            (0, core_1.info)(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
-                return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`;
-            }).join('\n')}`);
-            const startTime = Date.now().valueOf();
-            do {
-                (0, core_1.info)(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
-                for (const [index, schedule] of _schedules.entries()) {
-                    if (Date.now().valueOf() < schedule.date.valueOf())
-                        continue;
-                    (0, core_1.info)(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
-                    await octokit.rest.actions.createWorkflowDispatch({
-                        ...ownerRepo,
-                        workflow_id: schedule.workflow_id,
-                        ref: schedule.ref,
-                        inputs: inputs.inputs ? JSON.parse(inputs.inputs) : undefined
-                    });
-                    await octokit.rest.actions.deleteRepoVariable({
-                        ...ownerRepo,
-                        name: schedule.variableName,
-                    });
-                    _schedules.splice(index, 1);
-                }
-                if (inputs.waitMs > 0) {
-                    await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
-                }
-                _schedules = await getSchedules(octokit, ownerRepo);
-            } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
-            (0, core_1.info)(`😪 No more workflows to run. I'll try again next time...`);
+            await scheduleRun();
             break;
         case 'workflow_dispatch':
             if (inputDate) {
-                (0, core_1.info)(`🔍 You entered '${inputs.date}' which I assume is '${dateTimeFormatter.format(inputDate)}' your time (${inputs.timezone})`);
-                (0, core_1.info)(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
-                await octokit.rest.actions.createRepoVariable({
-                    ...ownerRepo,
-                    name: variableName(inputDate),
-                    value: inputs.ref,
-                });
-                (0, core_1.info)(`✅ Scheduled to run in ${durationString(new Date(), inputDate)}!`);
+                await scheduleAdd();
+            }
+            else {
+                await scheduleRun();
             }
             break;
-        case 'push':
         default:
             (0, core_1.info)(`⏩ Nothing to see here...`);
             break;
     }
-    const schedules = await getSchedules(octokit, ownerRepo);
+    const schedules = await getSchedules();
     const _summary = core_1.summary.addHeading(`📅 Scheduled Workflows`);
     if (schedules.length) {
         _summary.addTable([

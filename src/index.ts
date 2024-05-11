@@ -1,6 +1,5 @@
 import { getInput, info, summary } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
-import { GitHub } from "@actions/github/lib/utils";
 import { parseDate } from 'chrono-node'
 import { intervalToDuration } from 'date-fns'
 
@@ -60,7 +59,7 @@ export const run = async (): Promise<void> => {
   }
   const workflowId = workflow?.id;
   const variableName = (date: Date) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
-  const getSchedules = async (octokit: InstanceType<typeof GitHub>, ownerRepo: { owner: string; repo: string; }) => {
+  const getSchedules = async () => {
     const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
     const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
       const parts = variable.name.split('_');
@@ -73,59 +72,68 @@ export const run = async (): Promise<void> => {
     });
     return schedules;
   };
+  const scheduleAdd = async () => {
+    if (!inputDate) return;
+    info(`🔍 You entered '${inputs.date}' which I assume is '${dateTimeFormatter.format(inputDate)}' your time (${inputs.timezone})`);
+    info(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
+    return octokit.rest.actions.createRepoVariable({
+      ...ownerRepo,
+      name: variableName(inputDate),
+      value: inputs.ref,
+    }).then(() => {
+      info(`✅ Scheduled to run in ${durationString(new Date(), inputDate)}!`)
+    });
+  }
+  const scheduleRun = async () => new Promise(async (resolve) => {
+    let _schedules = await getSchedules();
+    info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
+    info(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
+      return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
+    }).join('\n')}`);
+    const startTime = Date.now().valueOf();
+    do {
+      info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
+      for (const [index, schedule] of _schedules.entries()) {
+        if (Date.now().valueOf() < schedule.date.valueOf()) continue;
+        info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
+        await octokit.rest.actions.createWorkflowDispatch({
+          ...ownerRepo,
+          workflow_id: schedule.workflow_id,
+          ref: schedule.ref,
+          inputs: inputs.inputs ? JSON.parse(inputs.inputs) : undefined
+        });
+        await octokit.rest.actions.deleteRepoVariable({
+          ...ownerRepo,
+          name: schedule.variableName,
+        });
+        _schedules.splice(index, 1);
+      }
+      if (inputs.waitMs > 0) {
+        await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
+      }
+      _schedules = await getSchedules();
+    } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
+    info(`😪 No more workflows to run. I'll try again next time...`);
+    resolve(null);
+  });
 
   switch (context.eventName) {
-    case 'push':
     case 'schedule':
-      let _schedules = await getSchedules(octokit, ownerRepo);
-      info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
-      info(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
-        return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
-      }).join('\n')}`);
-      const startTime = Date.now().valueOf();
-      do {
-        info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
-        for (const [index, schedule] of _schedules.entries()) {
-          if (Date.now().valueOf() < schedule.date.valueOf()) continue;
-          info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
-          await octokit.rest.actions.createWorkflowDispatch({
-            ...ownerRepo,
-            workflow_id: schedule.workflow_id,
-            ref: schedule.ref,
-            inputs: inputs.inputs ? JSON.parse(inputs.inputs) : undefined
-          });
-          await octokit.rest.actions.deleteRepoVariable({
-            ...ownerRepo,
-            name: schedule.variableName,
-          });
-          _schedules.splice(index, 1);
-        }
-        if (inputs.waitMs > 0) {
-          await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
-        }
-        _schedules = await getSchedules(octokit, ownerRepo);
-      } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
-      info(`😪 No more workflows to run. I'll try again next time...`);
+      await scheduleRun();
       break;
     case 'workflow_dispatch':
       if (inputDate) {
-        info(`🔍 You entered '${inputs.date}' which I assume is '${dateTimeFormatter.format(inputDate)}' your time (${inputs.timezone})`);
-        info(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
-        await octokit.rest.actions.createRepoVariable({
-          ...ownerRepo,
-          name: variableName(inputDate),
-          value: inputs.ref,
-        });
-        info(`✅ Scheduled to run in ${durationString(new Date(), inputDate)}!`);
+        await scheduleAdd();
+      } else {
+        await scheduleRun();
       }
       break;
-    case 'push':
     default:
       info(`⏩ Nothing to see here...`)
       break;
   }
 
-  const schedules = await getSchedules(octokit, ownerRepo);
+  const schedules = await getSchedules();
   const _summary = summary.addHeading(`📅 Scheduled Workflows`);
   if (schedules.length) {
     _summary.addTable([
