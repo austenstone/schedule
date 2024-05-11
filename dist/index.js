@@ -29163,6 +29163,7 @@ const run = async () => {
     const variableName = (workflow, date) => `_${variablePrefix}_${workflow}_${+date}`;
     switch (github_1.context.eventName) {
         case 'schedule':
+            (0, core_1.info)(`👀 Checking for scheduled workflows...`);
             const { data: { variables }, } = await octokit.rest.actions.listRepoVariables(ownerRepo);
             const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
                 return {
@@ -29170,13 +29171,16 @@ const run = async () => {
                     ref: variable.value
                 };
             });
+            (0, core_1.info)(`📅 Found ${schedules.length} scheduled workflows`);
             if (!schedules.length)
                 break;
             let timeElapsed = 0;
             do {
                 for (const schedule of schedules) {
                     if ((0, dayjs_1.default)().isAfter(schedule.date)) {
+                        (0, core_1.info)(`🚀 Running ${github_1.context.workflow} with ref:${schedule.ref} set for ${schedule.date.format()}`);
                         (0, core_1.setOutput)('ref', schedule.ref);
+                        (0, core_1.setOutput)('date', +schedule.date);
                         (0, core_1.setOutput)('result', 'true');
                         await octokit.rest.actions.deleteRepoVariable({
                             ...ownerRepo,
@@ -29191,24 +29195,20 @@ const run = async () => {
             } while (inputs.waitMs > timeElapsed);
             break;
         case 'workflow_dispatch':
-            console.log('Running on workflow_dispatch event');
             if (inputDate.isValid()) {
-                try {
-                    fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `token ${inputs.token}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            name: variableName(github_1.context.workflow, inputDate),
-                            value: github_1.context.ref,
-                        }),
-                    });
-                }
-                catch (err) {
-                    console.log('Error creating variable', JSON.stringify(err, null, 2));
-                }
+                (0, core_1.info)(`📅 Scheduling ${github_1.context.workflow} with ref:${github_1.context.ref} for ${inputDate.format()}`);
+                fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${inputs.token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: variableName(github_1.context.workflow, inputDate),
+                        value: github_1.context.ref,
+                    }),
+                });
+                (0, core_1.info)(`✅ Scheduled!`);
             }
             break;
         default:

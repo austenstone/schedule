@@ -1,4 +1,4 @@
-import { getInput, setOutput } from "@actions/core";
+import { getInput, info, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import dayjs from 'dayjs'
 
@@ -28,6 +28,7 @@ export const run = async (): Promise<void> => {
   const variableName = (workflow, date: dayjs.Dayjs) => `_${variablePrefix}_${workflow}_${+date}`;
   switch (context.eventName) {
     case 'schedule':
+      info(`👀 Checking for scheduled workflows...`);
       const {
         data: { variables },
       } = await octokit.rest.actions.listRepoVariables(ownerRepo);
@@ -37,12 +38,15 @@ export const run = async (): Promise<void> => {
           ref: variable.value
         }
       });
+      info(`📅 Found ${schedules.length} scheduled workflows`)
       if (!schedules.length) break;
       let timeElapsed = 0;
       do {
         for (const schedule of schedules) {
           if (dayjs().isAfter(schedule.date)) {
+            info(`🚀 Running ${context.workflow} with ref:${schedule.ref} set for ${schedule.date.format()}`);
             setOutput('ref', schedule.ref);
+            setOutput('date', +schedule.date);
             setOutput('result', 'true');
             await octokit.rest.actions.deleteRepoVariable({
               ...ownerRepo,
@@ -57,30 +61,27 @@ export const run = async (): Promise<void> => {
       } while (inputs.waitMs > timeElapsed)
       break;
     case 'workflow_dispatch':
-      console.log('Running on workflow_dispatch event');
       if (inputDate.isValid()) {
-        try {
-          fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `token ${inputs.token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              name: variableName(context.workflow, inputDate),
-              value: context.ref,
-            }),
-          });
-          // // This isn't currently working for some odd reason
-          // // https://github.com/octokit/rest.js/issues/431
-          // await octokit.rest.actions.createRepoVariable({
-          //   ...ownerRepo,
-          //   name: variableName(context.workflow, inputDate),
-          //   value: context.ref,
-          // });
-        } catch (err) {
-          console.log('Error creating variable', JSON.stringify(err, null, 2));
-        }
+        info(`📅 Scheduling ${context.workflow} with ref:${context.ref} for ${inputDate.format()}`);
+        fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `token ${inputs.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: variableName(context.workflow, inputDate),
+            value: context.ref,
+          }),
+        });
+        info(`✅ Scheduled!`);
+        // // This isn't currently working for some odd reason
+        // // https://github.com/octokit/rest.js/issues/431
+        // await octokit.rest.actions.createRepoVariable({
+        //   ...ownerRepo,
+        //   name: variableName(context.workflow, inputDate),
+        //   value: context.ref,
+        // });
       }
       break;
     default:
