@@ -18,6 +18,21 @@ inputs:
     description: 'Milliseconds to wait'
     required: false
     default: 0
+  workflow:
+    description: 'Workflow to run at schedule time'
+    required: false
+  ref:
+    description: 'Branch to run the workflow on'
+    required: false
+    default:  ${{ github.ref }}
+  owner:
+    description: 'Optional repository owner to run the workflow on.'
+    default: ${{ github.repository_owner }}
+    required: false
+  repo:
+    description: 'Optional repository name to run the workflow on.'
+    default: ${{ github.repository }}
+    required: false
 
 runs:
   using: "node20"

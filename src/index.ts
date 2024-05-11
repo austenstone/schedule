@@ -3,29 +3,35 @@ import { context, getOctokit } from "@actions/github";
 import dayjs from 'dayjs'
 
 interface Input {
+  owner: string;
+  repo: string;
   date: string;
   token: string;
   waitMs: number;
   workflow: string;
+  ref: string;
 }
 
 const getInputs = (): Input => {
   const result = {} as Input;
+  result.owner = getInput("owner");
+  result.repo = getInput("repo");
+  if (result.repo.includes('/')) {
+    result.repo = result.repo.split('/')[1];
+  }
   result.date = getInput("date");
   result.token = getInput("github-token");
   result.waitMs = parseInt(getInput("wait-ms"));
+  result.workflow = getInput("workflow");
+  result.ref = getInput("ref");
   return result;
 }
 
 export const run = async (): Promise<void> => {
   const inputs = getInputs();
   const ownerRepo = {
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-  };
-  const GITHUB_HEADERS = {
-    'Authorization': `token ${inputs.token}`,
-    'Content-Type': 'application/json',
+    owner: inputs.owner,
+    repo: inputs.repo,
   };
   const octokit = getOctokit(inputs.token);
   const inputDate = dayjs(inputs.date);
@@ -33,7 +39,7 @@ export const run = async (): Promise<void> => {
   const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
     .find((workflow) => workflow.path === inputs.workflow || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
   if (!workflow) {
-    throw new Error(`Workflow ${context.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
+    throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
   }
   const workflowId = workflow?.id;
   const variableName = (date: dayjs.Dayjs) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
@@ -61,7 +67,7 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
       do {
         for (const [index, schedule] of schedules.entries()) {
           if (!dayjs().isAfter(schedule.date)) continue;
-          info(`🚀 Running ${context.workflow} with ref:${schedule.ref} set for ${schedule.date.format()}`);
+          info(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.format()}`);
           setOutput('ref', schedule.ref);
           setOutput('date', +schedule.date);
           setOutput('result', 'true');
@@ -89,23 +95,13 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
       break;
     case 'workflow_dispatch':
       if (inputDate.isValid()) {
-        info(`📅 Scheduling ${context.workflow} with ref:${context.ref} for ${inputDate.format()}`);
-        fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
-          method: 'POST',
-          headers: GITHUB_HEADERS,
-          body: JSON.stringify({
-            name: variableName(inputDate),
-            value: context.ref,
-          }),
+        info(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${inputDate.format()}`);
+        await octokit.rest.actions.createRepoVariable({
+          ...ownerRepo,
+          name: variableName(inputDate),
+          value: inputs.ref,
         });
         info(`✅ Scheduled!`);
-        // // This isn't currently working for some odd reason
-        // // https://github.com/octokit/rest.js/issues/431
-        // await octokit.rest.actions.createRepoVariable({
-        //   ...ownerRepo,
-        //   name: variableName(context.workflow, inputDate),
-        //   value: context.ref,
-        // });
       }
       break;
     default:

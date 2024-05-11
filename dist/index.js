@@ -29146,20 +29146,23 @@ const github_1 = __nccwpck_require__(5438);
 const dayjs_1 = __importDefault(__nccwpck_require__(7401));
 const getInputs = () => {
     const result = {};
+    result.owner = (0, core_1.getInput)("owner");
+    result.repo = (0, core_1.getInput)("repo");
+    if (result.repo.includes('/')) {
+        result.repo = result.repo.split('/')[1];
+    }
     result.date = (0, core_1.getInput)("date");
     result.token = (0, core_1.getInput)("github-token");
     result.waitMs = parseInt((0, core_1.getInput)("wait-ms"));
+    result.workflow = (0, core_1.getInput)("workflow");
+    result.ref = (0, core_1.getInput)("ref");
     return result;
 };
 const run = async () => {
     const inputs = getInputs();
     const ownerRepo = {
-        owner: github_1.context.repo.owner,
-        repo: github_1.context.repo.repo,
-    };
-    const GITHUB_HEADERS = {
-        'Authorization': `token ${inputs.token}`,
-        'Content-Type': 'application/json',
+        owner: inputs.owner,
+        repo: inputs.repo,
     };
     const octokit = (0, github_1.getOctokit)(inputs.token);
     const inputDate = (0, dayjs_1.default)(inputs.date);
@@ -29167,7 +29170,7 @@ const run = async () => {
     const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
         .find((workflow) => workflow.path === inputs.workflow || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
     if (!workflow) {
-        throw new Error(`Workflow ${github_1.context.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
+        throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
     }
     const workflowId = workflow?.id;
     const variableName = (date) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
@@ -29195,7 +29198,7 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
                 for (const [index, schedule] of schedules.entries()) {
                     if (!(0, dayjs_1.default)().isAfter(schedule.date))
                         continue;
-                    (0, core_1.info)(`🚀 Running ${github_1.context.workflow} with ref:${schedule.ref} set for ${schedule.date.format()}`);
+                    (0, core_1.info)(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.format()}`);
                     (0, core_1.setOutput)('ref', schedule.ref);
                     (0, core_1.setOutput)('date', +schedule.date);
                     (0, core_1.setOutput)('result', 'true');
@@ -29224,14 +29227,11 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
             break;
         case 'workflow_dispatch':
             if (inputDate.isValid()) {
-                (0, core_1.info)(`📅 Scheduling ${github_1.context.workflow} with ref:${github_1.context.ref} for ${inputDate.format()}`);
-                fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
-                    method: 'POST',
-                    headers: GITHUB_HEADERS,
-                    body: JSON.stringify({
-                        name: variableName(inputDate),
-                        value: github_1.context.ref,
-                    }),
+                (0, core_1.info)(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${inputDate.format()}`);
+                await octokit.rest.actions.createRepoVariable({
+                    ...ownerRepo,
+                    name: variableName(inputDate),
+                    value: inputs.ref,
                 });
                 (0, core_1.info)(`✅ Scheduled!`);
             }
