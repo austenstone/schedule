@@ -29160,7 +29160,7 @@ const run = async () => {
     const octokit = (0, github_1.getOctokit)('token');
     const inputDate = (0, dayjs_1.default)(inputs.date);
     const variablePrefix = 'Schedule';
-    const variableName = (workflow, date) => `${variablePrefix}_${workflow}_${date.date.valueOf()}`;
+    const variableName = (workflow, date) => `${variablePrefix}_${workflow}_${+date.date}`;
     switch (github_1.context.eventName) {
         case 'schedule':
             const { data: { variables }, } = await octokit.rest.actions.listRepoVariables(ownerRepo);

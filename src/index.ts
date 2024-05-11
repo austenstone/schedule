@@ -25,7 +25,7 @@ export const run = async (): Promise<void> => {
   const octokit = getOctokit('token');
   const inputDate = dayjs(inputs.date);
   const variablePrefix = 'Schedule'
-  const variableName = (workflow, date: dayjs.Dayjs) => `${variablePrefix}_${workflow}_${date.date.valueOf()}`;
+  const variableName = (workflow, date: dayjs.Dayjs) => `${variablePrefix}_${workflow}_${+date.date}`;
   switch (context.eventName) {
     case 'schedule':
       const {
