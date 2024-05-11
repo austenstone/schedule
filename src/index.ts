@@ -22,16 +22,28 @@ export const run = async (): Promise<void> => {
     owner: context.repo.owner,
     repo: context.repo.repo,
   };
+  const GITHUB_HEADERS = {
+    'Authorization': `token ${inputs.token}`,
+    'Content-Type': 'application/json',
+  };
   const octokit = getOctokit('token');
   const inputDate = dayjs(inputs.date);
   const variablePrefix = 'schedule'
   const variableName = (workflow, date: dayjs.Dayjs) => `_${variablePrefix}_${workflow}_${+date}`;
   switch (context.eventName) {
+    case 'push':
     case 'schedule':
       info(`👀 Checking for scheduled workflows...`);
       const {
         data: { variables },
-      } = await octokit.rest.actions.listRepoVariables(ownerRepo);
+      } = await (await fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
+        headers: {
+          'Authorization': `token ${inputs.token}`,
+        },
+      })).json();
+      // const {
+      //   data: { variables },
+      // } = await octokit.rest.actions.listRepoVariables(ownerRepo);
       const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
         return {
           date: dayjs(variable.name.split('_')[2]),
@@ -65,10 +77,7 @@ export const run = async (): Promise<void> => {
         info(`📅 Scheduling ${context.workflow} with ref:${context.ref} for ${inputDate.format()}`);
         fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
           method: 'POST',
-          headers: {
-            'Authorization': `token ${inputs.token}`,
-            'Content-Type': 'application/json',
-          },
+          headers: GITHUB_HEADERS,
           body: JSON.stringify({
             name: variableName(context.workflow, inputDate),
             value: context.ref,

@@ -29157,14 +29157,23 @@ const run = async () => {
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo,
     };
+    const GITHUB_HEADERS = {
+        'Authorization': `token ${inputs.token}`,
+        'Content-Type': 'application/json',
+    };
     const octokit = (0, github_1.getOctokit)('token');
     const inputDate = (0, dayjs_1.default)(inputs.date);
     const variablePrefix = 'schedule';
     const variableName = (workflow, date) => `_${variablePrefix}_${workflow}_${+date}`;
     switch (github_1.context.eventName) {
+        case 'push':
         case 'schedule':
             (0, core_1.info)(`👀 Checking for scheduled workflows...`);
-            const { data: { variables }, } = await octokit.rest.actions.listRepoVariables(ownerRepo);
+            const { data: { variables }, } = await (await fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
+                headers: {
+                    'Authorization': `token ${inputs.token}`,
+                },
+            })).json();
             const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
                 return {
                     date: (0, dayjs_1.default)(variable.name.split('_')[2]),
@@ -29199,10 +29208,7 @@ const run = async () => {
                 (0, core_1.info)(`📅 Scheduling ${github_1.context.workflow} with ref:${github_1.context.ref} for ${inputDate.format()}`);
                 fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `token ${inputs.token}`,
-                        'Content-Type': 'application/json',
-                    },
+                    headers: GITHUB_HEADERS,
                     body: JSON.stringify({
                         name: variableName(github_1.context.workflow, inputDate),
                         value: github_1.context.ref,
