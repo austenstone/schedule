@@ -122,9 +122,14 @@ export const run = async (): Promise<void> => {
       break;
   }
   await summary
-    .addHeading(`Scheduled Workflows ${dateTimeFormatter.resolvedOptions().timeZoneName}`)
+    .addHeading(`Scheduled Workflows`)
     .addTable([
-      [{ data: 'Workflow', header: true }, { data: 'Scheduled Date', header: true }, { data: 'Ref', header: true }, { data: 'Path', header: true }],
+      [
+        { data: 'Workflow', header: true },
+        { data: `Scheduled Date (${dateTimeFormatter.formatToParts(new Date()).find((part) => part.type === 'timeZoneName')?.value})`, header: true },
+        { data: 'Ref', header: true },
+        { data: 'Path', header: true }
+      ],
       ...schedules.map((schedule) => {
         const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
         return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref, _workflow?.path || 'unknown'];

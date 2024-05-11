@@ -50231,6 +50231,7 @@ const getInputs = () => {
     result.workflow = (0, core_1.getInput)("workflow");
     result.ref = (0, core_1.getInput)("ref");
     result.timezone = (0, core_1.getInput)("timezone");
+    result.inputs = (0, core_1.getInput)("inputs");
     return result;
 };
 const run = async () => {
@@ -50290,6 +50291,7 @@ const run = async () => {
                         ...ownerRepo,
                         workflow_id: schedule.workflow_id,
                         ref: schedule.ref,
+                        inputs: inputs.inputs ? JSON.parse(inputs.inputs) : undefined
                     });
                     await octokit.rest.actions.deleteRepoVariable({
                         ...ownerRepo,
@@ -50321,9 +50323,14 @@ const run = async () => {
             break;
     }
     await core_1.summary
-        .addHeading(`Scheduled Workflows ${dateTimeFormatter.resolvedOptions().timeZoneName}`)
+        .addHeading(`Scheduled Workflows`)
         .addTable([
-        [{ data: 'Workflow', header: true }, { data: 'Scheduled Date', header: true }, { data: 'Ref', header: true }, { data: 'Path', header: true }],
+        [
+            { data: 'Workflow', header: true },
+            { data: `Scheduled Date (${dateTimeFormatter.formatToParts(new Date()).find((part) => part.type === 'timeZoneName')?.value})`, header: true },
+            { data: 'Ref', header: true },
+            { data: 'Path', header: true }
+        ],
         ...schedules.map((schedule) => {
             const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
             return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref, _workflow?.path || 'unknown'];
