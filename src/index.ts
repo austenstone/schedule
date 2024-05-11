@@ -72,19 +72,19 @@ export const run = async (): Promise<void> => {
         ref: variable.value
       }
     });
-    info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
-      return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
-    }).join('\n')}`);
     return schedules;
   };
 
   const schedules = await getSchedules(octokit, ownerRepo);
+  info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
+    return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
+  }).join('\n')}`);
   switch (context.eventName) {
     case 'push':
     case 'schedule':
       if (!schedules.length) break;
-      let timeElapsed = 0;
       let _schedules = schedules;
+      let timeElapsed = 0;
       do {
         for (const [index, schedule] of _schedules.entries()) {
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
@@ -102,7 +102,7 @@ export const run = async (): Promise<void> => {
           _schedules.splice(index, 1);
         }
         if (inputs.waitMs > 0) {
-          await (async () => await new Promise((resolve) => setTimeout(resolve, 1000)))();
+          await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
         }
         timeElapsed += inputs.waitDelayMs;
         _schedules = await getSchedules(octokit, ownerRepo);

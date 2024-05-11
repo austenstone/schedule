@@ -11,6 +11,8 @@ on:
         required: true
         type: string
         default: '2024-05-11'
+concurrency:
+  group: 'schedule'
 
 jobs:
   schedule:

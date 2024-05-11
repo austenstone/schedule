@@ -50302,7 +50302,7 @@ const run = async () => {
                     _schedules.splice(index, 1);
                 }
                 if (inputs.waitMs > 0) {
-                    await (async () => await new Promise((resolve) => setTimeout(resolve, 1000)))();
+                    await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
                 }
                 timeElapsed += inputs.waitDelayMs;
                 _schedules = await getSchedules(octokit, ownerRepo);
