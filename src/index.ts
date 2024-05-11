@@ -60,11 +60,22 @@ export const run = async (): Promise<void> => {
       console.log('Running on workflow_dispatch event');
       if (inputDate.isValid()) {
         try {
-          await octokit.rest.actions.createRepoVariable({
-            ...ownerRepo,
-            name: variableName(context.workflow, inputDate),
-            value: context.ref,
+          fetch('https://api.github.com/repos/austenstone/schedule/actions/variables', {
+            method: 'POST',
+            headers: {
+              'Authorization': `token ${inputs.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: variableName(context.workflow, inputDate),
+              value: context.ref,
+            }),
           });
+          // await octokit.rest.actions.createRepoVariable({
+          //   ...ownerRepo,
+          //   name: variableName(context.workflow, inputDate),
+          //   value: context.ref,
+          // });
         } catch (err) {
           console.log('Error creating variable', JSON.stringify(err, null, 2));
         }
