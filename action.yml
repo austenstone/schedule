@@ -18,6 +18,10 @@ inputs:
     description: 'Milliseconds to wait'
     required: false
     default: 0
+  wait-delay-ms:
+    description: 'Milliseconds to wait between checks on the schedule'
+    required: false
+    default: 20000
   workflow:
     description: 'Workflow to run at schedule time'
     required: false

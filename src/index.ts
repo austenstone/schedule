@@ -10,6 +10,7 @@ interface Input {
   date: string;
   token: string;
   waitMs: number;
+  waitDelayMs: number;
   workflow: string;
   ref: string;
   timezone: string;
@@ -26,6 +27,7 @@ const getInputs = (): Input => {
   result.date = getInput("date");
   result.token = getInput("github-token");
   result.waitMs = parseInt(getInput("wait-ms"));
+  result.waitDelayMs = parseInt(getInput("wait-delay-ms"));
   result.workflow = getInput("workflow");
   result.ref = getInput("ref");
   result.timezone = getInput("timezone");
@@ -82,8 +84,9 @@ export const run = async (): Promise<void> => {
     case 'schedule':
       if (!schedules.length) break;
       let timeElapsed = 0;
+      let _schedules = schedules;
       do {
-        for (const [index, schedule] of schedules.entries()) {
+        for (const [index, schedule] of _schedules.entries()) {
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
           info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
           await octokit.rest.actions.createWorkflowDispatch({
@@ -96,13 +99,14 @@ export const run = async (): Promise<void> => {
             ...ownerRepo,
             name: schedule.variableName,
           });
-          schedules.splice(index, 1);
+          _schedules.splice(index, 1);
         }
         if (inputs.waitMs > 0) {
           await (async () => await new Promise((resolve) => setTimeout(resolve, 1000)))();
         }
-        timeElapsed += 1000;
-      } while (inputs.waitMs > timeElapsed && schedules.length);
+        timeElapsed += inputs.waitDelayMs;
+        _schedules = await getSchedules(octokit, ownerRepo);
+      } while (inputs.waitMs > timeElapsed && _schedules.length);
       break;
     case 'workflow_dispatch':
       if (inputDate) {

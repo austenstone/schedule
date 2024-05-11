@@ -50228,6 +50228,7 @@ const getInputs = () => {
     result.date = (0, core_1.getInput)("date");
     result.token = (0, core_1.getInput)("github-token");
     result.waitMs = parseInt((0, core_1.getInput)("wait-ms"));
+    result.waitDelayMs = parseInt((0, core_1.getInput)("wait-delay-ms"));
     result.workflow = (0, core_1.getInput)("workflow");
     result.ref = (0, core_1.getInput)("ref");
     result.timezone = (0, core_1.getInput)("timezone");
@@ -50282,8 +50283,9 @@ const run = async () => {
             if (!schedules.length)
                 break;
             let timeElapsed = 0;
+            let _schedules = schedules;
             do {
-                for (const [index, schedule] of schedules.entries()) {
+                for (const [index, schedule] of _schedules.entries()) {
                     if (Date.now().valueOf() < schedule.date.valueOf())
                         continue;
                     (0, core_1.info)(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
@@ -50297,13 +50299,14 @@ const run = async () => {
                         ...ownerRepo,
                         name: schedule.variableName,
                     });
-                    schedules.splice(index, 1);
+                    _schedules.splice(index, 1);
                 }
                 if (inputs.waitMs > 0) {
                     await (async () => await new Promise((resolve) => setTimeout(resolve, 1000)))();
                 }
-                timeElapsed += 1000;
-            } while (inputs.waitMs > timeElapsed && schedules.length);
+                timeElapsed += inputs.waitDelayMs;
+                _schedules = await getSchedules(octokit, ownerRepo);
+            } while (inputs.waitMs > timeElapsed && _schedules.length);
             break;
         case 'workflow_dispatch':
             if (inputDate) {

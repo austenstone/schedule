@@ -13,7 +13,7 @@ on:
         default: '2024-05-11'
 
 jobs:
-  check-schedule:
+  schedule:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +22,6 @@ jobs:
         with:
           github-token: ${{ secrets.TOKEN }}
           date: ${{ github.event.inputs.date }}
-          wait-ms: 5000
+          wait-ms: 300000
           workflow: 'basic.yml'
           timezone: 'EST'
