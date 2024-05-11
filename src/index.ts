@@ -55,8 +55,8 @@ export const run = async (): Promise<void> => {
         const parts = variable.name.split('_');
         console.log(parts);
         return {
-          workflow_id: parts[1],
-          date: dayjs(+parts[2]),
+          workflow_id: parts[2],
+          date: dayjs(+parts[3]),
           ref: variable.value
         }
       });

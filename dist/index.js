@@ -29181,8 +29181,8 @@ const run = async () => {
                 const parts = variable.name.split('_');
                 console.log(parts);
                 return {
-                    workflow_id: parts[1],
-                    date: (0, dayjs_1.default)(+parts[2]),
+                    workflow_id: parts[2],
+                    date: (0, dayjs_1.default)(+parts[3]),
                     ref: variable.value
                 };
             });
