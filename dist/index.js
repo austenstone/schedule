@@ -50272,17 +50272,14 @@ const run = async () => {
         });
         return schedules;
     };
-    (0, core_1.info)(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
-    const schedules = await getSchedules(octokit, ownerRepo);
-    (0, core_1.info)(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
-        return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`;
-    }).join('\n')}`);
     switch (github_1.context.eventName) {
         case 'push':
         case 'schedule':
-            if (!schedules.length)
-                break;
-            let _schedules = schedules;
+            let _schedules = await getSchedules(octokit, ownerRepo);
+            (0, core_1.info)(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
+            (0, core_1.info)(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
+                return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`;
+            }).join('\n')}`);
             const startTime = Date.now().valueOf();
             do {
                 (0, core_1.info)(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
@@ -50318,7 +50315,7 @@ const run = async () => {
                     name: variableName(inputDate),
                     value: inputs.ref,
                 });
-                (0, core_1.info)(`✅ Scheduled to run in ${durationString(new Date(Date.now()), inputDate)}!`);
+                (0, core_1.info)(`✅ Scheduled to run in ${durationString(new Date(), inputDate)}!`);
             }
             break;
         case 'push':
@@ -50326,6 +50323,7 @@ const run = async () => {
             (0, core_1.info)(`⏩ Nothing to see here...`);
             break;
     }
+    const schedules = await getSchedules(octokit, ownerRepo);
     const _summary = core_1.summary.addHeading(`📅 Scheduled Workflows`);
     if (schedules.length) {
         _summary.addTable([

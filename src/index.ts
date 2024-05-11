@@ -74,16 +74,14 @@ export const run = async (): Promise<void> => {
     return schedules;
   };
 
-  info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
-  const schedules = await getSchedules(octokit, ownerRepo);
-  info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
-    return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
-  }).join('\n')}`);
   switch (context.eventName) {
     case 'push':
     case 'schedule':
-      if (!schedules.length) break;
-      let _schedules = schedules;
+      let _schedules = await getSchedules(octokit, ownerRepo);
+      info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
+      info(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
+        return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
+      }).join('\n')}`);
       const startTime = Date.now().valueOf();
       do {
         info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
@@ -118,7 +116,7 @@ export const run = async (): Promise<void> => {
           name: variableName(inputDate),
           value: inputs.ref,
         });
-        info(`✅ Scheduled to run in ${durationString(new Date(Date.now()), inputDate)}!`);
+        info(`✅ Scheduled to run in ${durationString(new Date(), inputDate)}!`);
       }
       break;
     case 'push':
@@ -127,6 +125,7 @@ export const run = async (): Promise<void> => {
       break;
   }
 
+  const schedules = await getSchedules(octokit, ownerRepo);
   const _summary = summary.addHeading(`📅 Scheduled Workflows`);
   if (schedules.length) {
     _summary.addTable([
