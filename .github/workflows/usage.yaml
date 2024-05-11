@@ -32,7 +32,7 @@ jobs:
         id: check
         with:
           github-token: ${{ secrets.TOKEN }}
-          date: 5/10/2024
+          date: 5/14/2024
   run:
     needs: check-schedule
     if: needs.check-schedule.outputs.result == 'true'
