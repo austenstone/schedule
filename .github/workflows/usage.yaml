@@ -19,6 +19,9 @@ jobs:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_PEM }}
       - uses: actions/checkout@v4
+      - run: gh variable list
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
       - run: gh variable set MYVARIABLE --body "$ENV_VALUE"
         env:
           ENV_VALUE: "my value"
