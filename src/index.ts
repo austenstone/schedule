@@ -28,8 +28,13 @@ export const run = async (): Promise<void> => {
   };
   const octokit = getOctokit('token');
   const inputDate = dayjs(inputs.date);
-  const variablePrefix = '_schedule'
-  const variableName = (workflow, date: dayjs.Dayjs) => `${variablePrefix}_${workflow}_${+date}`;
+  const variablePrefix = '_SCHEDULE'
+  const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows.find((workflow) => workflow.name === context.workflow);
+  if (!workflow) {
+    throw new Error(`Workflow ${context.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
+  }
+  const workflowId = workflow?.id;
+  const variableName = (date: dayjs.Dayjs) => `${variablePrefix}_${workflowId}_${+date}`;
   switch (context.eventName) {
     case 'push':
     case 'schedule':
@@ -37,16 +42,20 @@ export const run = async (): Promise<void> => {
       const {
         variables
       } = await (await fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
-        headers: {
-          'Authorization': `token ${inputs.token}`,
-        },
+        headers: GITHUB_HEADERS,
       })).json();
       // const {
       //   data: { variables },
       // } = await octokit.rest.actions.listRepoVariables(ownerRepo);
-      const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
+      const schedules: {
+        workflow_id: number;
+        date: dayjs.Dayjs;
+        ref: string;
+      }[] = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
+        const parts = variable.name.split('_');
         return {
-          date: dayjs(variable.name.split('_')[2]),
+          workflow_id: parts[1],
+          date: dayjs(parts[2]),
           ref: variable.value
         }
       });
@@ -60,9 +69,14 @@ export const run = async (): Promise<void> => {
             setOutput('ref', schedule.ref);
             setOutput('date', +schedule.date);
             setOutput('result', 'true');
+            await octokit.rest.actions.createWorkflowDispatch({
+              ...ownerRepo,
+              workflow_id: schedule.workflow_id,
+              ref: schedule.ref,
+            });
             await octokit.rest.actions.deleteRepoVariable({
               ...ownerRepo,
-              name: variableName(context.workflow, schedule.date),
+              name: variableName(schedule.date),
             });
           }
         }
@@ -79,7 +93,7 @@ export const run = async (): Promise<void> => {
           method: 'POST',
           headers: GITHUB_HEADERS,
           body: JSON.stringify({
-            name: variableName(context.workflow, inputDate),
+            name: variableName(inputDate),
             value: context.ref,
           }),
         });
