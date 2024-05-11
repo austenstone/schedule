@@ -35,7 +35,7 @@ export const run = async (): Promise<void> => {
 
   try {
     info(`Getting projects for ${input.owner}/${input.repo}`)
-    const projects = getProjects(octokit, ownerRepo.owner, ownerRepo.repo, input.projectName);
+    const projects = await getProjects(octokit, ownerRepo.owner, ownerRepo.repo, input.projectName);
     console.log(JSON.stringify(projects, null, 2));
   } catch (error) {
     if (error instanceof Error) {

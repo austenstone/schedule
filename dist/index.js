@@ -29158,7 +29158,7 @@ const run = async () => {
     };
     try {
         (0, core_1.info)(`Getting projects for ${input.owner}/${input.repo}`);
-        const projects = (0, projects_1.getProjects)(octokit, ownerRepo.owner, ownerRepo.repo, input.projectName);
+        const projects = await (0, projects_1.getProjects)(octokit, ownerRepo.owner, ownerRepo.repo, input.projectName);
         console.log(JSON.stringify(projects, null, 2));
     }
     catch (error) {
@@ -29201,7 +29201,7 @@ const getProjects = async (octokit, owner, repo, projectName) => {
     }
   }`;
     (0, core_1.info)(`Query: ${query}`);
-    return await octokit.graphql(query);
+    return octokit.graphql(query);
 };
 exports.getProjects = getProjects;
 

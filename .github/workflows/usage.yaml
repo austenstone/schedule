@@ -12,6 +12,12 @@ jobs:
       repository-projects: write
     runs-on: ubuntu-latest
     steps:
+      - name: Generate token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PEM }}
       - uses: actions/checkout@v4
       - uses: ./
         with:
