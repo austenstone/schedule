@@ -34,6 +34,7 @@ export const run = async (): Promise<void> => {
 
   try {
     const { data: projects } = await octokit.rest.projects.listForRepo(ownerRepo);
+    info(JSON.stringify(projects, null, 2));
     const project = projects.find((project) => project.name === input.projectName);
     if (!project) {
       throw new Error(`Project ${input.projectName} not found`);
