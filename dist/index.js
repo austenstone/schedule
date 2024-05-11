@@ -29170,6 +29170,8 @@ const run = async () => {
                     ref: variable.value
                 };
             });
+            if (!schedules.length)
+                break;
             let timeElapsed = 0;
             do {
                 for (const schedule of schedules) {
@@ -29191,11 +29193,16 @@ const run = async () => {
         case 'workflow_dispatch':
             console.log('Running on workflow_dispatch event');
             if (inputDate.isValid()) {
-                await octokit.rest.actions.createRepoVariable({
-                    ...ownerRepo,
-                    name: variableName(github_1.context.workflow, inputDate),
-                    value: github_1.context.ref,
-                });
+                try {
+                    await octokit.rest.actions.createRepoVariable({
+                        ...ownerRepo,
+                        name: variableName(github_1.context.workflow, inputDate),
+                        value: github_1.context.ref,
+                    });
+                }
+                catch (err) {
+                    console.log('Error creating variable', JSON.stringify(err, null, 2));
+                }
             }
             break;
         default:
