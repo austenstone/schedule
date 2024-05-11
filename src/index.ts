@@ -47,10 +47,6 @@ export const run = async (): Promise<void> => {
     if (!column) {
       throw new Error(`Column To do not found`);
     }
-
-    const { data: cards } = await octokit.rest.projects.listCards({
-      column_id: column.id,
-    });
   } catch (error) {
     if (error instanceof Error) {
       info(JSON.stringify(error, null, 2));
@@ -66,14 +62,10 @@ export const run = async (): Promise<void> => {
   const { data: columns } = await octokit.rest.projects.listColumns({
     project_id: project.id,
   });
-  const column = columns.find((column) => column. === "To do");
+  const column = columns.find((column) => column.name === "To do");
   if (!column) {
     throw new Error(`Column To do not found`);
   }
-
-  const { data: cards } = await octokit.rest.projects.listCards({
-    column_id: column.id,
-  });
 };
 
 run();

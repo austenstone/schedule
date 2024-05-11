@@ -29136,6 +29136,13 @@ const github_1 = __nccwpck_require__(5438);
 const getInputs = () => {
     const result = {};
     result.token = (0, core_1.getInput)("github-token");
+    result.projectName = (0, core_1.getInput)("project-name");
+    result.owner = (0, core_1.getInput)("owner");
+    result.repo = (0, core_1.getInput)("repo");
+    if (result.repo.includes("/")) {
+        const parts = result.repo.split("/");
+        result.repo = parts[1];
+    }
     if (!result.token || result.token === "") {
         throw new Error("github-token is required");
     }
@@ -29144,8 +29151,43 @@ const getInputs = () => {
 const run = async () => {
     const input = getInputs();
     const octokit = (0, github_1.getOctokit)(input.token);
-    const { data: { login }, } = await octokit.rest.users.getAuthenticated();
-    (0, core_1.info)(`Hello, ${login}!`);
+    const ownerRepo = {
+        owner: input.owner,
+        repo: input.repo,
+    };
+    try {
+        const { data: projects } = await octokit.rest.projects.listForRepo(ownerRepo);
+        const project = projects.find((project) => project.name === input.projectName);
+        if (!project) {
+            throw new Error(`Project ${input.projectName} not found`);
+        }
+        (0, core_1.info)(`Project ID: ${project.id}`);
+        const { data: columns } = await octokit.rest.projects.listColumns({
+            project_id: project.id,
+        });
+        const column = columns.find((column) => column.name === "To do");
+        if (!column) {
+            throw new Error(`Column To do not found`);
+        }
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            (0, core_1.info)(JSON.stringify(error, null, 2));
+        }
+    }
+    const { data: projects } = await octokit.rest.projects.listForRepo(ownerRepo);
+    const project = projects.find((project) => project.name === input.projectName);
+    if (!project) {
+        throw new Error(`Project ${input.projectName} not found`);
+    }
+    (0, core_1.info)(`Project ID: ${project.id}`);
+    const { data: columns } = await octokit.rest.projects.listColumns({
+        project_id: project.id,
+    });
+    const column = columns.find((column) => column.name === "To do");
+    if (!column) {
+        throw new Error(`Column To do not found`);
+    }
 };
 exports.run = run;
 (0, exports.run)();
