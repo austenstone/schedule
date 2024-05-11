@@ -60,7 +60,7 @@ export const run = async (): Promise<void> => {
       console.log('Running on workflow_dispatch event');
       if (inputDate.isValid()) {
         try {
-          fetch('https://api.github.com/repos/austenstone/schedule/actions/variables', {
+          fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
             method: 'POST',
             headers: {
               'Authorization': `token ${inputs.token}`,
@@ -71,6 +71,8 @@ export const run = async (): Promise<void> => {
               value: context.ref,
             }),
           });
+          // // This isn't currently working for some odd reason
+          // // https://github.com/octokit/rest.js/issues/431
           // await octokit.rest.actions.createRepoVariable({
           //   ...ownerRepo,
           //   name: variableName(context.workflow, inputDate),

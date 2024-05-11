@@ -29194,7 +29194,7 @@ const run = async () => {
             console.log('Running on workflow_dispatch event');
             if (inputDate.isValid()) {
                 try {
-                    fetch('https://api.github.com/repos/austenstone/schedule/actions/variables', {
+                    fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
                         method: 'POST',
                         headers: {
                             'Authorization': `token ${inputs.token}`,
