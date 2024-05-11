@@ -29163,8 +29163,8 @@ const run = async () => {
     };
     const octokit = (0, github_1.getOctokit)('token');
     const inputDate = (0, dayjs_1.default)(inputs.date);
-    const variablePrefix = 'schedule';
-    const variableName = (workflow, date) => `_${variablePrefix}_${workflow}_${+date}`;
+    const variablePrefix = '_schedule';
+    const variableName = (workflow, date) => `${variablePrefix}_${workflow}_${+date}`;
     switch (github_1.context.eventName) {
         case 'push':
         case 'schedule':

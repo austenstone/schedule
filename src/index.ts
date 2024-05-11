@@ -28,8 +28,8 @@ export const run = async (): Promise<void> => {
   };
   const octokit = getOctokit('token');
   const inputDate = dayjs(inputs.date);
-  const variablePrefix = 'schedule'
-  const variableName = (workflow, date: dayjs.Dayjs) => `_${variablePrefix}_${workflow}_${+date}`;
+  const variablePrefix = '_schedule'
+  const variableName = (workflow, date: dayjs.Dayjs) => `${variablePrefix}_${workflow}_${+date}`;
   switch (context.eventName) {
     case 'push':
     case 'schedule':
