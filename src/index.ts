@@ -24,8 +24,8 @@ export const run = async (): Promise<void> => {
   };
   const octokit = getOctokit('token');
   const inputDate = dayjs(inputs.date);
-  const variablePrefix = 'Schedule'
-  const variableName = (workflow, date: dayjs.Dayjs) => `${variablePrefix}_${workflow}_${+date}`;
+  const variablePrefix = 'schedule'
+  const variableName = (workflow, date: dayjs.Dayjs) => `_${variablePrefix}_${workflow}_${+date}`;
   switch (context.eventName) {
     case 'schedule':
       const {
@@ -33,7 +33,7 @@ export const run = async (): Promise<void> => {
       } = await octokit.rest.actions.listRepoVariables(ownerRepo);
       const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
         return {
-          date: dayjs(variable.name.split('_')[1]),
+          date: dayjs(variable.name.split('_')[2]),
           ref: variable.value
         }
       });

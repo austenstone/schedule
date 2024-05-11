@@ -29159,14 +29159,14 @@ const run = async () => {
     };
     const octokit = (0, github_1.getOctokit)('token');
     const inputDate = (0, dayjs_1.default)(inputs.date);
-    const variablePrefix = 'Schedule';
-    const variableName = (workflow, date) => `${variablePrefix}_${workflow}_${+date}`;
+    const variablePrefix = 'schedule';
+    const variableName = (workflow, date) => `_${variablePrefix}_${workflow}_${+date}`;
     switch (github_1.context.eventName) {
         case 'schedule':
             const { data: { variables }, } = await octokit.rest.actions.listRepoVariables(ownerRepo);
             const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
                 return {
-                    date: (0, dayjs_1.default)(variable.name.split('_')[1]),
+                    date: (0, dayjs_1.default)(variable.name.split('_')[2]),
                     ref: variable.value
                 };
             });
