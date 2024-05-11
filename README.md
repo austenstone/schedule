@@ -1,33 +1,55 @@
 # Action
 
-This repository serves as a [template](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) for TypeScript [Actions](https://docs.github.com/en/actions).
+Schedule your workflows to run at a future date and time.
+
+This works using the `schedule` event to poll GitHub variables which are used as a database.
 
 ## Usage
-Create a workflow (eg: `.github/workflows/seat-count.yml`). See [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file).
+Create a workflow (eg: `.github/workflows/schedule.yml`). See [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file).
 
-<!-- 
-### PAT(Personal Access Token)
-
-You will need to [create a PAT(Personal Access Token)](https://github.com/settings/tokens/new?scopes=admin:org) that has `admin:org` access.
-
-Add this PAT as a secret so we can use it as input `github-token`, see [Creating encrypted secrets for a repository](https://docs.github.com/en/enterprise-cloud@latest/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository). 
-### Organizations
-
-If your organization has SAML enabled you must authorize the PAT, see [Authorizing a personal access token for use with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/authorizing-a-personal-access-token-for-use-with-saml-single-sign-on).
--->
+### Authentication
 
 #### Example
+
+This workflow runs on a `schedule` event every hour and checks the schedule for any pending workflows to run.
+
+To schedule a workflow, manually do a `workflow_dispatch` by going to "Actions > 📅 Schedule Workflow Dispatch", type when you want the workflow to run, and click Run workflow.
+
+To use this workflow you want to replace the `workflow` input with the name, path, or id of the workflow you want to run. You should also change the `timezone` input to your timezone.
+
+Make sure you've set your PAT to the `TOKEN` secret in your repository settings.
+
 ```yml
-name: TypeScript Action Workflow
+name: 📅 Schedule Workflow Dispatch
 on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 */1 * * *'
   workflow_dispatch:
+    inputs:
+      date:
+        description: 'Date to run the workflow'
+        required: true
+        type: string
+        default: '2024-05-11'
+concurrency:
+  group: 'schedule'
+  cancel-in-progress: true
 
 jobs:
-  run:
-    name: Run Action
+  schedule:
+    name: 📅 Schedule
     runs-on: ubuntu-latest
     steps:
-      - uses: austenstone/action-typescript@main
+      - uses: actions/checkout@v4
+      - uses: ./
+        id: check
+        with:
+          github-token: ${{ secrets.TOKEN }}
+          date: ${{ github.event.inputs.date }}
+          workflow: 'basic.yml'
+          timezone: 'EST'
 ```
 
 ## ➡️ Inputs
