@@ -1,6 +1,7 @@
 import { getInput, info, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import dayjs from 'dayjs'
+import chrono from 'chrono-node'
 
 interface Input {
   owner: string;
@@ -34,7 +35,7 @@ export const run = async (): Promise<void> => {
     repo: inputs.repo,
   };
   const octokit = getOctokit(inputs.token);
-  const inputDate = dayjs(inputs.date);
+  const inputDate = chrono.parseDate(inputs.date);
   const variablePrefix = '_SCHEDULE'
   const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
     .find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
@@ -42,7 +43,7 @@ export const run = async (): Promise<void> => {
     throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
   }
   const workflowId = workflow?.id;
-  const variableName = (date: dayjs.Dayjs) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
+  const variableName = (date: Date) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
   switch (context.eventName) {
     case 'push':
     case 'schedule':
@@ -66,10 +67,10 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
       let timeElapsed = 0;
       do {
         for (const [index, schedule] of schedules.entries()) {
-          if (!dayjs().isAfter(schedule.date)) continue;
+          if (schedule.date.valueOf() < Date.now()) continue;
           info(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.format()}`);
           setOutput('ref', schedule.ref);
-          setOutput('date', +schedule.date);
+          setOutput('date', schedule.date.valueOf());
           setOutput('result', 'true');
           await octokit.rest.actions.createWorkflowDispatch({
             ...ownerRepo,
@@ -94,8 +95,8 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
       } while (inputs.waitMs > timeElapsed)
       break;
     case 'workflow_dispatch':
-      if (inputDate.isValid()) {
-        info(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${inputDate.format()}`);
+      if (inputDate) {
+        info(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${inputDate.toLocaleTimeString()}`);
         await octokit.rest.actions.createRepoVariable({
           ...ownerRepo,
           name: variableName(inputDate),
