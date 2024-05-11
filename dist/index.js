@@ -50320,7 +50320,7 @@ const run = async () => {
             (0, core_1.info)(`⏩ Nothing to see here...`);
             break;
     }
-    core_1.summary
+    await core_1.summary
         .addHeading('Scheduled Workflows')
         .addTable([
         [{ data: 'Workflow', header: true }, { data: 'Ref', header: true }, { data: 'Scheduled Date', header: true }],

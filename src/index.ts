@@ -118,7 +118,7 @@ export const run = async (): Promise<void> => {
       info(`⏩ Nothing to see here...`)
       break;
   }
-  summary
+  await summary
     .addHeading('Scheduled Workflows')
     .addTable([
       [{ data: 'Workflow', header: true }, { data: 'Ref', header: true }, { data: 'Scheduled Date', header: true }],
