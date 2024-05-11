@@ -25,6 +25,5 @@ jobs:
         with:
           github-token: ${{ secrets.TOKEN }}
           date: ${{ github.event.inputs.date }}
-          wait-ms: 300000
           workflow: 'basic.yml'
           timezone: 'EST'

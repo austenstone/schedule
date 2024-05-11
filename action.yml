@@ -13,7 +13,7 @@ inputs:
   date:
     description: 'Date to run the workflow'
     required: false
-    default: '2024-05-11'
+    default: 'Tomorrow at noon'
   wait-ms:
     description: 'Milliseconds to wait'
     required: false
