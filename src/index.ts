@@ -44,8 +44,9 @@ export const run = async (): Promise<void> => {
   });
   const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
     dateStyle: 'full',
-    timeStyle: 'full',
-    timeZone: inputs.timezone || 'UTC'
+    timeStyle: 'medium',
+    timeZone: inputs.timezone || 'UTC',
+    timeZoneName: 'short',
   });
   const durationString = (start: Date, end: Date) => Object.entries(intervalToDuration({ start, end })).map(([key, value]) => `${value} ${key}`).join(', ');
   const variablePrefix = '_SCHEDULE'
