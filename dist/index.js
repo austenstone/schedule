@@ -29156,6 +29156,7 @@ const run = async () => {
         repo: input.repo,
     };
     try {
+        (0, core_1.info)(`Getting projects for ${input.owner}/${input.repo}`);
         const { data: projects } = await octokit.rest.projects.listForRepo(ownerRepo);
         (0, core_1.info)(JSON.stringify(projects, null, 2));
         const project = projects.find((project) => project.name === input.projectName);
