@@ -46,7 +46,6 @@ export const run = async (): Promise<void> => {
     dateStyle: 'full',
     timeStyle: 'medium',
     timeZone: inputs.timezone || 'UTC',
-    timeZoneName: 'short',
   });
   const durationString = (start: Date, end: Date) => Object.entries(intervalToDuration({ start, end })).map(([key, value]) => `${value} ${key}`).join(', ');
   const variablePrefix = '_SCHEDULE'

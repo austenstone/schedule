@@ -50247,7 +50247,6 @@ const run = async () => {
         dateStyle: 'full',
         timeStyle: 'medium',
         timeZone: inputs.timezone || 'UTC',
-        timeZoneName: 'short',
     });
     const durationString = (start, end) => Object.entries((0, date_fns_1.intervalToDuration)({ start, end })).map(([key, value]) => `${value} ${key}`).join(', ');
     const variablePrefix = '_SCHEDULE';
