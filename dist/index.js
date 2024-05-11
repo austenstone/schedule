@@ -29197,10 +29197,16 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
                         (0, core_1.setOutput)('ref', schedule.ref);
                         (0, core_1.setOutput)('date', +schedule.date);
                         (0, core_1.setOutput)('result', 'true');
-                        await octokit.rest.actions.deleteRepoVariable({
-                            ...ownerRepo,
-                            name: schedule.variableName,
-                        });
+                        try {
+                            await octokit.rest.actions.deleteRepoVariable({
+                                ...ownerRepo,
+                                name: schedule.variableName,
+                            });
+                        }
+                        catch (error) {
+                            (0, core_1.info)(`❌ Failed to delete variable ${schedule.variableName}`);
+                            console.error(JSON.stringify(error, null, 2));
+                        }
                     }
                 }
                 if (inputs.waitMs > 0) {

@@ -68,10 +68,15 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
             //   workflow_id: schedule.workflow_id,
             //   ref: schedule.ref,
             // });
-            await octokit.rest.actions.deleteRepoVariable({
-              ...ownerRepo,
-              name: schedule.variableName,
-            });
+            try {
+              await octokit.rest.actions.deleteRepoVariable({
+                ...ownerRepo,
+                name: schedule.variableName,
+              });
+            } catch (error) {
+              info(`❌ Failed to delete variable ${schedule.variableName}`);
+              console.error(JSON.stringify(error, null, 2));
+            }
           }
         }
         if (inputs.waitMs > 0) {
