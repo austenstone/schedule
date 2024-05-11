@@ -126,7 +126,7 @@ export const run = async (): Promise<void> => {
     .addTable([
       [
         { data: 'Workflow', header: true },
-        { data: `Scheduled Date (${dateTimeFormatter.formatToParts(new Date()).find((part) => part.type === 'timeZoneName')?.value})`, header: true },
+        { data: `Scheduled Date (${inputs.timezone})`, header: true },
         { data: 'Ref', header: true },
         { data: 'Path', header: true }
       ],
