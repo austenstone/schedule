@@ -1,6 +1,6 @@
-name: TypeScript Action
+name: Schedule
 author: Austen Stone
-description: A TypeScript Action
+description: Schedule a workflow to run at a specific time
 branding:
   icon: "plus"
   color: "blue"
