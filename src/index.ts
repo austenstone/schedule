@@ -56,7 +56,7 @@ export const run = async (): Promise<void> => {
         console.log(parts);
         return {
           workflow_id: parts[1],
-          date: dayjs(parts[2]),
+          date: dayjs(+parts[2]),
           ref: variable.value
         }
       });

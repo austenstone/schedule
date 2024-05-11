@@ -29182,7 +29182,7 @@ const run = async () => {
                 console.log(parts);
                 return {
                     workflow_id: parts[1],
-                    date: (0, dayjs_1.default)(parts[2]),
+                    date: (0, dayjs_1.default)(+parts[2]),
                     ref: variable.value
                 };
             });
