@@ -29151,7 +29151,7 @@ exports.run = void 0;
 const core_1 = __nccwpck_require__(2186);
 const github_1 = __nccwpck_require__(5438);
 const dayjs_1 = __importDefault(__nccwpck_require__(7401));
-const chrono_node_1 = __importDefault(__nccwpck_require__(810));
+const chrono_node_1 = __nccwpck_require__(810);
 const getInputs = () => {
     const result = {};
     result.owner = (0, core_1.getInput)("owner");
@@ -29173,7 +29173,7 @@ const run = async () => {
         repo: inputs.repo,
     };
     const octokit = (0, github_1.getOctokit)(inputs.token);
-    const inputDate = chrono_node_1.default.parseDate(inputs.date);
+    const inputDate = (0, chrono_node_1.parseDate)(inputs.date);
     const variablePrefix = '_SCHEDULE';
     const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
         .find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);

@@ -1,7 +1,7 @@
 import { getInput, info, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import dayjs from 'dayjs'
-import chrono from 'chrono-node'
+import { parseDate } from 'chrono-node'
 
 interface Input {
   owner: string;
@@ -35,7 +35,7 @@ export const run = async (): Promise<void> => {
     repo: inputs.repo,
   };
   const octokit = getOctokit(inputs.token);
-  const inputDate = chrono.parseDate(inputs.date);
+  const inputDate = parseDate(inputs.date);
   const variablePrefix = '_SCHEDULE'
   const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
     .find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
