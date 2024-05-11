@@ -25,7 +25,7 @@ jobs:
         with:
           github-token: ${{ secrets.TOKEN }}
   run:
-    if: !github.event.inputs.date
+    if: github.event.inputs.date == ''
     runs-on: ubuntu-latest
     steps:
       - run: echo "Hello, world!"
