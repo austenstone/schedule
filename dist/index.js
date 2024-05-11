@@ -50322,21 +50322,25 @@ const run = async () => {
             (0, core_1.info)(`⏩ Nothing to see here...`);
             break;
     }
-    await core_1.summary
-        .addHeading(`Scheduled Workflows`)
-        .addTable([
-        [
-            { data: 'Workflow', header: true },
-            { data: `Scheduled Date (${inputs.timezone})`, header: true },
-            { data: 'Ref', header: true },
-            { data: 'Path', header: true }
-        ],
-        ...schedules.map((schedule) => {
-            const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
-            return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref, _workflow?.path || 'unknown'];
-        })
-    ])
-        .write();
+    core_1.summary.addHeading(`📅 Scheduled Workflows`);
+    if (schedules.length) {
+        core_1.summary.addTable([
+            [
+                { data: 'Workflow', header: true },
+                { data: `Scheduled Date (${inputs.timezone})`, header: true },
+                { data: 'Ref', header: true },
+                { data: 'Path', header: true }
+            ],
+            ...schedules.map((schedule) => {
+                const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
+                return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref, _workflow?.path || 'unknown'];
+            })
+        ]);
+    }
+    else {
+        core_1.summary.addRaw('No scheduled workflows found');
+    }
+    await core_1.summary.write();
 };
 exports.run = run;
 (0, exports.run)();

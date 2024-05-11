@@ -121,9 +121,10 @@ export const run = async (): Promise<void> => {
       info(`⏩ Nothing to see here...`)
       break;
   }
-  await summary
-    .addHeading(`Scheduled Workflows`)
-    .addTable([
+
+  summary.addHeading(`📅 Scheduled Workflows`)
+  if (schedules.length) {
+    summary.addTable([
       [
         { data: 'Workflow', header: true },
         { data: `Scheduled Date (${inputs.timezone})`, header: true },
@@ -134,8 +135,11 @@ export const run = async (): Promise<void> => {
         const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
         return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref, _workflow?.path || 'unknown'];
       })
-    ])
-    .write();
+    ]);
+  } else {
+    summary.addRaw('No scheduled workflows found');
+  }
+  await summary.write();
 };
 
 run();
