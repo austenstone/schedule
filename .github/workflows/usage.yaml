@@ -1,4 +1,4 @@
-name: Schedule
+name: Schedule Workflow Dispatch
 on:
   push:
   pull_request:
