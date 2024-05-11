@@ -116,42 +116,34 @@ export const run = async (): Promise<void> => {
     info(`😪 No more workflows to run. I'll try again next time...`);
     resolve(null);
   });
+  const summaryWrite = async () => {
+    const schedules = await getSchedules();
+    const _summary = summary.addHeading(`📅 Scheduled Workflows`);
+    if (schedules.length) {
+      _summary.addTable([
+        [
+          { data: 'Workflow', header: true },
+          { data: `Scheduled Date (${inputs.timezone})`, header: true },
+          { data: 'Ref', header: true },
+          { data: 'Path', header: true }
+        ],
+        ...schedules.map((schedule) => {
+          const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
+          return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref, _workflow?.path || 'unknown'];
+        })
+      ]);
+    } else {
+      _summary.addRaw('No scheduled workflows found');
+    }
+    return _summary.write();
+  };
 
-  switch (context.eventName) {
-    case 'schedule':
-      await scheduleRun();
-      break;
-    case 'workflow_dispatch':
-      if (inputDate) {
-        await scheduleAdd();
-      } else {
-        await scheduleRun();
-      }
-      break;
-    default:
-      info(`⏩ Nothing to see here...`)
-      break;
-  }
 
-  const schedules = await getSchedules();
-  const _summary = summary.addHeading(`📅 Scheduled Workflows`);
-  if (schedules.length) {
-    _summary.addTable([
-      [
-        { data: 'Workflow', header: true },
-        { data: `Scheduled Date (${inputs.timezone})`, header: true },
-        { data: 'Ref', header: true },
-        { data: 'Path', header: true }
-      ],
-      ...schedules.map((schedule) => {
-        const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
-        return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref, _workflow?.path || 'unknown'];
-      })
-    ]);
-  } else {
-    _summary.addRaw('No scheduled workflows found');
+  if (context.eventName === 'workflow_dispatch' && inputDate) {
+    await scheduleAdd();
   }
-  await _summary.write();
+  await scheduleRun();
+  await summaryWrite();
 };
 
 run();
