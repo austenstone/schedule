@@ -22,7 +22,7 @@ jobs:
       - run: gh variable set MYVARIABLE --body "$ENV_VALUE"
         env:
           ENV_VALUE: "my value"
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.TOKEN }}
       - uses: ./
         with:
           github-token: ${{ secrets.TOKEN }}
