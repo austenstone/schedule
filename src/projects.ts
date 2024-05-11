@@ -52,4 +52,3 @@ export const getProjects = async (octokit: InstanceType<typeof GitHub>, owner: s
   info(`Query: ${query}`)
   return await octokit.graphql(query)
 };
-
