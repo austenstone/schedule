@@ -29169,12 +29169,13 @@ const run = async () => {
         case 'push':
         case 'schedule':
             (0, core_1.info)(`👀 Checking for scheduled workflows...`);
-            const { data: { variables }, } = await (await fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
+            const data = await (await fetch(`https://api.github.com/repos/${ownerRepo.owner}/${ownerRepo.repo}/actions/variables`, {
                 headers: {
                     'Authorization': `token ${inputs.token}`,
                 },
             })).json();
-            const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
+            console.log(data);
+            const schedules = data.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
                 return {
                     date: (0, dayjs_1.default)(variable.name.split('_')[2]),
                     ref: variable.value
