@@ -50322,9 +50322,9 @@ const run = async () => {
             (0, core_1.info)(`⏩ Nothing to see here...`);
             break;
     }
-    core_1.summary.addHeading(`📅 Scheduled Workflows`);
+    const _summary = core_1.summary.addHeading(`📅 Scheduled Workflows`);
     if (schedules.length) {
-        core_1.summary.addTable([
+        _summary.addTable([
             [
                 { data: 'Workflow', header: true },
                 { data: `Scheduled Date (${inputs.timezone})`, header: true },
@@ -50338,9 +50338,9 @@ const run = async () => {
         ]);
     }
     else {
-        core_1.summary.addRaw('No scheduled workflows found');
+        _summary.addRaw('No scheduled workflows found');
     }
-    await core_1.summary.write();
+    await _summary.write();
 };
 exports.run = run;
 (0, exports.run)();

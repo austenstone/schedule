@@ -122,9 +122,9 @@ export const run = async (): Promise<void> => {
       break;
   }
 
-  summary.addHeading(`📅 Scheduled Workflows`)
+  const _summary = summary.addHeading(`📅 Scheduled Workflows`);
   if (schedules.length) {
-    summary.addTable([
+    _summary.addTable([
       [
         { data: 'Workflow', header: true },
         { data: `Scheduled Date (${inputs.timezone})`, header: true },
@@ -137,9 +137,9 @@ export const run = async (): Promise<void> => {
       })
     ]);
   } else {
-    summary.addRaw('No scheduled workflows found');
+    _summary.addRaw('No scheduled workflows found');
   }
-  await summary.write();
+  await _summary.write();
 };
 
 run();

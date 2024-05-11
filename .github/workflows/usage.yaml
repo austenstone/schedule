@@ -25,9 +25,3 @@ jobs:
           wait-ms: 5000
           workflow: 'basic.yml'
           timezone: 'EST'
-  run:
-    needs: check-schedule
-    if: ${{ needs.check-schedule.outputs.result == 'true'}}
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "This is scheduled!"
