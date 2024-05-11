@@ -29161,7 +29161,7 @@ const run = async () => {
         'Authorization': `token ${inputs.token}`,
         'Content-Type': 'application/json',
     };
-    const octokit = (0, github_1.getOctokit)('token');
+    const octokit = (0, github_1.getOctokit)(inputs.token);
     const inputDate = (0, dayjs_1.default)(inputs.date);
     const variablePrefix = '_SCHEDULE';
     const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows.find((workflow) => workflow.name === github_1.context.workflow);

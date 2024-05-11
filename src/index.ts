@@ -26,7 +26,7 @@ export const run = async (): Promise<void> => {
     'Authorization': `token ${inputs.token}`,
     'Content-Type': 'application/json',
   };
-  const octokit = getOctokit('token');
+  const octokit = getOctokit(inputs.token);
   const inputDate = dayjs(inputs.date);
   const variablePrefix = '_SCHEDULE'
   const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows.find((workflow) => workflow.name === context.workflow);
