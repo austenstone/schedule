@@ -29160,6 +29160,7 @@ const getInputs = () => {
     result.waitMs = parseInt((0, core_1.getInput)("wait-ms"));
     result.workflow = (0, core_1.getInput)("workflow");
     result.ref = (0, core_1.getInput)("ref");
+    result.timezone = (0, core_1.getInput)("timezone");
     return result;
 };
 const run = async () => {
@@ -29170,7 +29171,12 @@ const run = async () => {
     };
     const octokit = (0, github_1.getOctokit)(inputs.token);
     const inputDate = (0, chrono_node_1.parseDate)(inputs.date, {
-        timezone: 'UTC'
+        timezone: inputs.timezone || 'UTC'
+    });
+    const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'full',
+        timeStyle: 'full',
+        timeZone: inputs.timezone || 'UTC'
     });
     const variablePrefix = '_SCHEDULE';
     const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
@@ -29183,7 +29189,7 @@ const run = async () => {
     switch (github_1.context.eventName) {
         case 'push':
         case 'schedule':
-            (0, core_1.info)(`👀 Checking for scheduled workflows... It's currently ${new Date().toLocaleString()}`);
+            (0, core_1.info)(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
             const { data: { variables }, } = await octokit.rest.actions.listRepoVariables(ownerRepo);
             const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
                 const parts = variable.name.split('_');
@@ -29196,7 +29202,7 @@ const run = async () => {
                 };
             });
             (0, core_1.info)(`📅 Found ${schedules.length} scheduled workflows:
-${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
+${schedules.map((schedule) => `${dateTimeFormatter.format(schedule.date)} - ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
             if (!schedules.length)
                 break;
             let timeElapsed = 0;
@@ -29204,7 +29210,7 @@ ${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.wo
                 for (const [index, schedule] of schedules.entries()) {
                     if (Date.now().valueOf() < schedule.date.valueOf())
                         continue;
-                    (0, core_1.info)(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.toLocaleString()}`);
+                    (0, core_1.info)(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
                     (0, core_1.setOutput)('ref', schedule.ref);
                     (0, core_1.setOutput)('date', schedule.date.valueOf());
                     (0, core_1.setOutput)('result', 'true');
@@ -29233,7 +29239,8 @@ ${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.wo
             break;
         case 'workflow_dispatch':
             if (inputDate) {
-                (0, core_1.info)(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${inputDate.toLocaleString()}`);
+                (0, core_1.info)(`🔍 You entered '${inputs.date}' which I assume is '${dateTimeFormatter.format(inputDate)}' your time (${inputs.timezone})`);
+                (0, core_1.info)(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
                 await octokit.rest.actions.createRepoVariable({
                     ...ownerRepo,
                     name: variableName(inputDate),

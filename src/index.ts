@@ -26,7 +26,7 @@ const getInputs = (): Input => {
   result.workflow = getInput("workflow");
   result.ref = getInput("ref");
   result.timezone = getInput("timezone");
-  
+
   return result;
 }
 
@@ -40,6 +40,11 @@ export const run = async (): Promise<void> => {
   const inputDate = parseDate(inputs.date, {
     timezone: inputs.timezone || 'UTC'
   });
+  const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'full',
+    timeStyle: 'full',
+    timeZone: inputs.timezone || 'UTC'
+  });
   const variablePrefix = '_SCHEDULE'
   const workflow = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows
     .find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
@@ -51,7 +56,7 @@ export const run = async (): Promise<void> => {
   switch (context.eventName) {
     case 'push':
     case 'schedule':
-      info(`👀 Checking for scheduled workflows... It's currently ${new Date().toLocaleString()}`);
+      info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
       const {
         data: { variables },
       } = await octokit.rest.actions.listRepoVariables(ownerRepo);
@@ -66,13 +71,13 @@ export const run = async (): Promise<void> => {
         }
       });
       info(`📅 Found ${schedules.length} scheduled workflows:
-${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
+${schedules.map((schedule) => `${dateTimeFormatter.format(schedule.date)} - ${schedule.workflow_id} ${schedule.ref}`).join('\n')}`);
       if (!schedules.length) break;
       let timeElapsed = 0;
       do {
         for (const [index, schedule] of schedules.entries()) {
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
-          info(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${schedule.date.toLocaleString()}`);
+          info(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
           setOutput('ref', schedule.ref);
           setOutput('date', schedule.date.valueOf());
           setOutput('result', 'true');
@@ -100,7 +105,8 @@ ${schedules.map((schedule) => `${schedule.date.toLocaleString()} - ${schedule.wo
       break;
     case 'workflow_dispatch':
       if (inputDate) {
-        info(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${inputDate.toLocaleString()}`);
+        info(`🔍 You entered '${inputs.date}' which I assume is '${dateTimeFormatter.format(inputDate)}' your time (${inputs.timezone})`);
+        info(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
         await octokit.rest.actions.createRepoVariable({
           ...ownerRepo,
           name: variableName(inputDate),
