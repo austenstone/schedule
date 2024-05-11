@@ -64,11 +64,11 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
           setOutput('ref', schedule.ref);
           setOutput('date', +schedule.date);
           setOutput('result', 'true');
-          // await octokit.rest.actions.createWorkflowDispatch({
-          //   ...ownerRepo,
-          //   workflow_id: schedule.workflow_id,
-          //   ref: schedule.ref,
-          // });
+          await octokit.rest.actions.createWorkflowDispatch({
+            ...ownerRepo,
+            workflow_id: schedule.workflow_id,
+            ref: schedule.ref,
+          });
           try {
             await octokit.rest.actions.deleteRepoVariable({
               ...ownerRepo,

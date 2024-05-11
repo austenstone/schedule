@@ -23,6 +23,7 @@ jobs:
           github-token: ${{ secrets.TOKEN }}
           date: ${{ github.event.inputs.date }}
           wait-ms: 5000
+          workflow: 'basic.yml'
   run:
     needs: check-schedule
     if: ${{ needs.check-schedule.outputs.result == 'true'}}
