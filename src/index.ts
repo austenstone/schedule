@@ -107,7 +107,7 @@ export const run = async (): Promise<void> => {
         }
         _schedules = await getSchedules(octokit, ownerRepo);
       } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
-      info(`😪 No more workflows. I'll try again next time...`);
+      info(`😪 No more workflows to run. I'll try again next time...`);
       break;
     case 'workflow_dispatch':
       if (inputDate) {

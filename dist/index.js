@@ -50307,7 +50307,7 @@ const run = async () => {
                 }
                 _schedules = await getSchedules(octokit, ownerRepo);
             } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
-            (0, core_1.info)(`😪 No more workflows. I'll try again next time...`);
+            (0, core_1.info)(`😪 No more workflows to run. I'll try again next time...`);
             break;
         case 'workflow_dispatch':
             if (inputDate) {
