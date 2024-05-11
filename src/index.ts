@@ -1,6 +1,7 @@
 import { getInput, info } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import { parseDate } from 'chrono-node'
+import { intervalToDuration } from 'date-fns'
 
 interface Input {
   owner: string;
@@ -70,16 +71,18 @@ export const run = async (): Promise<void> => {
           ref: variable.value
         }
       });
-      info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) =>
-        `${dateTimeFormatter.format(schedule.date)} - ${schedule.workflow_id} ${schedule.ref}`
-      ).join('\n')}`);
+      info(`📅 Found ${schedules.length} scheduled workflows:\n${schedules.map((schedule) => {
+        const interval = intervalToDuration({ start: new Date(Date.now()), end: schedule.date });
+        const intervalString = Object.entries(interval).map(([key, value]) => `${value} ${key}`).join(', ');
+        return `${schedule.workflow_id}@${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}... ${intervalString}`
+      }).join('\n')}`);
       if (!schedules.length) break;
       let timeElapsed = 0;
       do {
         for (const [index, schedule] of schedules.entries()) {
           info(`if ${Date.now().valueOf()} < ${schedule.date.valueOf()}`);
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
-          info(`🚀 Running ${schedule.workflow_id} with ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
+          info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
           await octokit.rest.actions.createWorkflowDispatch({
             ...ownerRepo,
             workflow_id: schedule.workflow_id,
