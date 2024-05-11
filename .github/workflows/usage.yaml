@@ -1,4 +1,4 @@
-name: Usage
+name: Schedule
 on:
   push:
   pull_request:
@@ -21,11 +21,16 @@ jobs:
         env:
           ENV_VALUE: "my value"
           GH_TOKEN: ${{ secrets.TOKEN }}
+  check-schedule:
+    if: github.event.inputs.date == ''
+    runs-on: ubuntu-latest
+    steps:
       - uses: ./
         with:
           github-token: ${{ secrets.TOKEN }}
   run:
-    if: github.event.inputs.date == ''
+    needs: check-schedule
+    if: needs.check-schedule.outputs.result == 'true'
     runs-on: ubuntu-latest
     steps:
       - run: echo "Hello, world!"
