@@ -34,7 +34,7 @@ export const run = async (): Promise<void> => {
     throw new Error(`Workflow ${context.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
   }
   const workflowId = workflow?.id;
-  const variableName = (date: dayjs.Dayjs) => `${variablePrefix}_${workflowId}_${+date}`;
+  const variableName = (date: dayjs.Dayjs) => `${variablePrefix}_${workflowId}_${date.unix()}`;
   switch (context.eventName) {
     case 'push':
     case 'schedule':

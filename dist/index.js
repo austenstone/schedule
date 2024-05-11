@@ -29169,7 +29169,7 @@ const run = async () => {
         throw new Error(`Workflow ${github_1.context.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
     }
     const workflowId = workflow?.id;
-    const variableName = (date) => `${variablePrefix}_${workflowId}_${+date}`;
+    const variableName = (date) => `${variablePrefix}_${workflowId}_${date.unix()}`;
     switch (github_1.context.eventName) {
         case 'push':
         case 'schedule':
