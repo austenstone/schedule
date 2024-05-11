@@ -29179,6 +29179,7 @@ const run = async () => {
             })).json();
             const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
                 const parts = variable.name.split('_');
+                console.log(parts);
                 return {
                     workflow_id: parts[1],
                     date: (0, dayjs_1.default)(parts[2]),

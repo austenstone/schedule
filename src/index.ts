@@ -53,6 +53,7 @@ export const run = async (): Promise<void> => {
         ref: string;
       }[] = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
         const parts = variable.name.split('_');
+        console.log(parts);
         return {
           workflow_id: parts[1],
           date: dayjs(parts[2]),
