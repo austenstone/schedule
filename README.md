@@ -4,6 +4,8 @@ Schedule your workflows to run at a future date and time.
 
 This works using the `schedule` event to poll GitHub variables which are used as a database.
 
+![chrome_9FPx3g6KF6](https://github.com/austenstone/schedule/assets/22425467/163e516a-e959-43e6-a867-9527f5de034f)
+
 ## Usage
 Create a workflow (eg: `.github/workflows/schedule.yml`). See [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file).
 
