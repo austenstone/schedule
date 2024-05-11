@@ -10,18 +10,14 @@ inputs:
     description: The GitHub token used to create an authenticated client
     default: ${{ github.token }}
     required: false
-  project-name:
-    description: The name of the project
-    default: "Deploy"
-    required: true
-  owner:
-    description: The owner of the repository
-    default: ${{ github.repository_owner }}
-    required: true
-  repo:
-    description: The repository name
-    default: ${{ github.repository }}
-    required: true
+  date:
+    description: 'Date to run the workflow'
+    required: false
+    default: '2024-05-11'
+  waitMs:
+    description: 'Milliseconds to wait'
+    required: false
+    default: 0
 
 runs:
   using: "node20"
