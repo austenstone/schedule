@@ -37,6 +37,9 @@ inputs:
     description: 'Timezone to use for the schedule'
     required: false
     default: 'EST'
+  inputs:
+    description: 'Inputs to pass to the workflow'
+    required: false
 
 runs:
   using: "node20"

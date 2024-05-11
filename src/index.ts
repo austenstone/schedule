@@ -13,6 +13,7 @@ interface Input {
   workflow: string;
   ref: string;
   timezone: string;
+  inputs: string;
 }
 
 const getInputs = (): Input => {
@@ -28,6 +29,7 @@ const getInputs = (): Input => {
   result.workflow = getInput("workflow");
   result.ref = getInput("ref");
   result.timezone = getInput("timezone");
+  result.inputs = getInput("inputs");
 
   return result;
 }
@@ -88,6 +90,7 @@ export const run = async (): Promise<void> => {
             ...ownerRepo,
             workflow_id: schedule.workflow_id,
             ref: schedule.ref,
+            inputs: inputs.inputs ? JSON.parse(inputs.inputs) : undefined
           });
           await octokit.rest.actions.deleteRepoVariable({
             ...ownerRepo,
