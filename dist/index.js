@@ -29191,23 +29191,24 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
                 break;
             let timeElapsed = 0;
             do {
-                for (const schedule of schedules) {
-                    if ((0, dayjs_1.default)().isAfter(schedule.date)) {
-                        (0, core_1.info)(`🚀 Running ${github_1.context.workflow} with ref:${schedule.ref} set for ${schedule.date.format()}`);
-                        (0, core_1.setOutput)('ref', schedule.ref);
-                        (0, core_1.setOutput)('date', +schedule.date);
-                        (0, core_1.setOutput)('result', 'true');
-                        try {
-                            await octokit.rest.actions.deleteRepoVariable({
-                                ...ownerRepo,
-                                name: schedule.variableName,
-                            });
-                        }
-                        catch (error) {
-                            (0, core_1.info)(`❌ Failed to delete variable ${schedule.variableName}`);
-                            console.error(JSON.stringify(error, null, 2));
-                        }
+                for (const [index, schedule] of schedules.entries()) {
+                    if (!(0, dayjs_1.default)().isAfter(schedule.date))
+                        continue;
+                    (0, core_1.info)(`🚀 Running ${github_1.context.workflow} with ref:${schedule.ref} set for ${schedule.date.format()}`);
+                    (0, core_1.setOutput)('ref', schedule.ref);
+                    (0, core_1.setOutput)('date', +schedule.date);
+                    (0, core_1.setOutput)('result', 'true');
+                    try {
+                        await octokit.rest.actions.deleteRepoVariable({
+                            ...ownerRepo,
+                            name: schedule.variableName,
+                        });
                     }
+                    catch (error) {
+                        (0, core_1.info)(`❌ Failed to delete variable ${schedule.variableName}`);
+                        console.error(JSON.stringify(error, null, 2));
+                    }
+                    schedules.splice(index, 1);
                 }
                 if (inputs.waitMs > 0) {
                     await (async () => await new Promise((resolve) => setTimeout(resolve, 1000)))();

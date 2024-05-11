@@ -57,27 +57,28 @@ ${schedules.map((schedule) => `${schedule.date.format()}: ${schedule.workflow_id
       if (!schedules.length) break;
       let timeElapsed = 0;
       do {
-        for (const schedule of schedules) {
-          if (dayjs().isAfter(schedule.date)) {
-            info(`🚀 Running ${context.workflow} with ref:${schedule.ref} set for ${schedule.date.format()}`);
-            setOutput('ref', schedule.ref);
-            setOutput('date', +schedule.date);
-            setOutput('result', 'true');
-            // await octokit.rest.actions.createWorkflowDispatch({
-            //   ...ownerRepo,
-            //   workflow_id: schedule.workflow_id,
-            //   ref: schedule.ref,
-            // });
-            try {
-              await octokit.rest.actions.deleteRepoVariable({
-                ...ownerRepo,
-                name: schedule.variableName,
-              });
-            } catch (error) {
-              info(`❌ Failed to delete variable ${schedule.variableName}`);
-              console.error(JSON.stringify(error, null, 2));
-            }
+        for (const [index, schedule] of schedules.entries()) {
+          if (!dayjs().isAfter(schedule.date)) continue;
+          
+          info(`🚀 Running ${context.workflow} with ref:${schedule.ref} set for ${schedule.date.format()}`);
+          setOutput('ref', schedule.ref);
+          setOutput('date', +schedule.date);
+          setOutput('result', 'true');
+          // await octokit.rest.actions.createWorkflowDispatch({
+          //   ...ownerRepo,
+          //   workflow_id: schedule.workflow_id,
+          //   ref: schedule.ref,
+          // });
+          try {
+            await octokit.rest.actions.deleteRepoVariable({
+              ...ownerRepo,
+              name: schedule.variableName,
+            });
+          } catch (error) {
+            info(`❌ Failed to delete variable ${schedule.variableName}`);
+            console.error(JSON.stringify(error, null, 2));
           }
+          schedules.splice(index, 1);
         }
         if (inputs.waitMs > 0) {
           await (async () => await new Promise((resolve) => setTimeout(resolve, 1000)))();
