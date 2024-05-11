@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: gh variable set Schedule_${{ github.event.inputs.date }} --body "${{ github.ref }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
       - uses: ./
         id: check
         with:
