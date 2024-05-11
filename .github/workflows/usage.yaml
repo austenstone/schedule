@@ -12,6 +12,9 @@ jobs:
       repository-projects: write
     runs-on: ubuntu-latest
     steps:
+      - run: gh variable set MYVARIABLE --body "$ENV_VALUE"
+        env:
+          ENV_VALUE: "my value"
       - name: Generate token
         id: generate-token
         uses: actions/create-github-app-token@v1
