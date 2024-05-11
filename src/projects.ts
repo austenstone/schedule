@@ -1,3 +1,4 @@
+import { info } from "@actions/core";
 import { GitHub } from "@actions/github/lib/utils";
 
 interface NodeField {
@@ -30,7 +31,7 @@ interface RootObject {
 }
 
 export const getProjects = async (octokit: InstanceType<typeof GitHub>, owner: string, repo: string, projectName: string): Promise<RootObject> => {
-  return await octokit.graphql(`{
+  const query = `{
     repository(owner: "${owner}", name: "${repo}") {
       projectsV2(query: "name:${projectName}", first: 10) {
         nodes {
@@ -47,6 +48,8 @@ export const getProjects = async (octokit: InstanceType<typeof GitHub>, owner: s
         }
       }
     }
-  }`)
+  }`;
+  info(`Query: ${query}`)
+  return await octokit.graphql(query)
 };
 

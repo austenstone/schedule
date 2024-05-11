@@ -29174,14 +29174,15 @@ exports.run = run;
 /***/ }),
 
 /***/ 5827:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getProjects = void 0;
+const core_1 = __nccwpck_require__(2186);
 const getProjects = async (octokit, owner, repo, projectName) => {
-    return await octokit.graphql(`{
+    const query = `{
     repository(owner: "${owner}", name: "${repo}") {
       projectsV2(query: "name:${projectName}", first: 10) {
         nodes {
@@ -29198,7 +29199,9 @@ const getProjects = async (octokit, owner, repo, projectName) => {
         }
       }
     }
-  }`);
+  }`;
+    (0, core_1.info)(`Query: ${query}`);
+    return await octokit.graphql(query);
 };
 exports.getProjects = getProjects;
 
