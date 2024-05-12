@@ -1,4 +1,4 @@
-# Action
+# Schedule Workflow Runs Action
 
 Schedule your workflows to run at a future date and time.
 
