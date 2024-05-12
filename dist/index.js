@@ -50365,7 +50365,6 @@ const run = async () => {
         }
         return _summary.write();
     };
-    console.log(inputs.date, inputDate);
     if (github_1.context.eventName === 'workflow_dispatch' && inputDate) {
         await scheduleAdd();
     }
