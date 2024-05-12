@@ -2,6 +2,11 @@ name: Basic
 
 on:
   workflow_dispatch:
+    inputs:
+      name:
+        description: 'Name of the person to greet'
+        required: true
+        default: 'Mona the Octocat'
 
 jobs:
   build:
@@ -10,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run a one-line script
-        run: echo Hello, world!
+        run: echo Hello, ${{ github.event.inputs.name }}!
       - name: Run a multi-line script
         run: |
           git branch -a
