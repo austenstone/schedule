@@ -112,7 +112,7 @@ export const run = async (): Promise<void> => {
         for (const [index, schedule] of _schedules.entries()) {
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
           const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
-          info(`🚀 Running ${_workflow?.name || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
+          info(`🚀 Running ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
 
           promises.push(octokit.rest.actions.createWorkflowDispatch({
             ...ownerRepo,
