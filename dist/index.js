@@ -50265,12 +50265,14 @@ const run = async () => {
         const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
             const parts = variable.name.split('_');
             const valParts = variable.value.split(/,(.*)/s);
+            const workflowInputs = valParts[1].trim().length > 0 ? JSON.parse(valParts[1]) : undefined;
+            delete workflowInputs.date;
             return {
                 variableName: variable.name,
                 workflow_id: parts[2],
                 date: new Date(+parts[3]),
                 ref: valParts[0],
-                inputs: valParts[1]
+                inputs: workflowInputs
             };
         });
         return schedules;
@@ -50305,7 +50307,7 @@ const run = async () => {
                     ...ownerRepo,
                     workflow_id: schedule.workflow_id,
                     ref: schedule.ref,
-                    inputs: inputs.inputs ? JSON.parse(inputs.inputs) : undefined
+                    inputs: schedule.inputs
                 });
                 await octokit.rest.actions.deleteRepoVariable({
                     ...ownerRepo,
