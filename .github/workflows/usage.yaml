@@ -19,7 +19,7 @@ on:
           - 'basic.yml'
           - 'codeql.yml'
 concurrency:
-  group: schedule
+  group: schedule${{ github.event.inputs.date }}
   cancel-in-progress: true
 
 jobs:
