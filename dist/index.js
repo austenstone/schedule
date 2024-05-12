@@ -50296,7 +50296,7 @@ const run = async () => {
         if (!inputDate)
             return;
         (0, core_1.info)(`🔍 You entered '${inputs.date}' which I assume is '${dateTimeFormatter.format(inputDate)}' your time (${inputs.timezone})`);
-        (0, core_1.info)(`📅 Scheduling ${workflow.name} with ref:${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
+        (0, core_1.info)(`📅 Scheduling ${workflow.name}@${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
         return octokit.rest.actions.createRepoVariable({
             ...ownerRepo,
             name: variableName(inputDate),
@@ -50327,7 +50327,7 @@ const run = async () => {
                         ref: schedule.ref,
                         inputs: schedule.inputs
                     }).catch((err) => {
-                        (0, core_1.warning)(`⚠️ Failed to run ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}: ${err instanceof Error ? err.message : err}`);
+                        (0, core_1.warning)(`Failed to run ${_workflow?.path || schedule.workflow_id}@${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}:\nError: ${err instanceof Error ? err.message : err}`);
                     });
                     await octokit.rest.actions.deleteRepoVariable({
                         ...ownerRepo,
