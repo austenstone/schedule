@@ -104,27 +104,34 @@ export const run = async (): Promise<void> => {
     const startTime = Date.now().valueOf();
     do {
       info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
+      const promises = [] as Promise<any>[];
       for (const [index, schedule] of _schedules.entries()) {
         if (Date.now().valueOf() < schedule.date.valueOf()) continue;
         info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
-        await octokit.rest.actions.createWorkflowDispatch({
+
+        promises.push(octokit.rest.actions.createWorkflowDispatch({
           ...ownerRepo,
           workflow_id: schedule.workflow_id,
           ref: schedule.ref,
           inputs: schedule.inputs
-        });
-        await octokit.rest.actions.deleteRepoVariable({
+        }));
+
+        promises.push(octokit.rest.actions.deleteRepoVariable({
           ...ownerRepo,
           name: schedule.variableName,
-        });
+        }));
+
         _schedules.splice(index, 1);
       }
+
       if (inputs.waitMs > 0) {
-        await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
+        // promises.push(new Promise((resolve) => setTimeout(() => resolve(null), inputs.waitDelayMs)));
       }
+
+      await Promise.all(promises);
       _schedules = await getSchedules();
       console.log(`${Date.now().valueOf() - startTime} < ${inputs.waitDelayMs}`);
-    } while (inputs.waitDelayMs > (Date.now().valueOf() - startTime) && _schedules.length);
+    } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
     info(`😪 No more workflows to run. I'll try again next time...`);
   };
   const summaryWrite = async () => {
