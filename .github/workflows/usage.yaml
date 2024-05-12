@@ -31,7 +31,7 @@ jobs:
           github-token: ${{ secrets.TOKEN }}
           date: ${{ github.event.inputs.date }}
           workflow: 'basic.yml'
-          timezone: 'EST'
+          timezone: 'EDT'
           inputs: ${{ toJson(inputs) }}
           wait-ms: 1000
           wait-delay-ms: 600000
