@@ -50265,6 +50265,7 @@ const run = async () => {
         if (!variables)
             return [];
         const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
+            console.log(variable);
             const parts = variable.name.split('_');
             const valParts = variable.value.split(/,(.*)/s);
             const workflowInputs = valParts[1] && valParts[1].trim().length > 0 ? JSON.parse(valParts[1]) : undefined;
