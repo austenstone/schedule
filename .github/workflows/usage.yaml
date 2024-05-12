@@ -26,7 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./
-        id: check
         with:
           github-token: ${{ secrets.TOKEN }}
           date: ${{ github.event.inputs.date }}

@@ -102,7 +102,7 @@ export const run = async (): Promise<void> => {
       return `${schedule.workflow_id}@${schedule.ref} will run ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
     }).join('\n')}`);
     const startTime = Date.now().valueOf();
-    return group('🚀 Running scheduled workflows', async () => {
+    return group('👀 Looking for scheduled workflows to run', async () => {
 
       do {
         info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);

@@ -19,7 +19,7 @@ You need to create a Personal Access Token (PAT) with the `repo` scope and add i
 
 ### Example
 
-This workflow runs on a `schedule` event every hour and checks the schedule for any pending workflows to run.
+This workflow runs on a `schedule` event every hour and spends <1min checking the schedule for any pending workflows to run.
 
 To schedule a workflow, manually do a `workflow_dispatch` by going to "Actions > 📅 Schedule Workflow Dispatch", type when you want the workflow to run, and click Run workflow.
 
@@ -52,13 +52,13 @@ jobs:
     name: 📅 Schedule
     runs-on: ubuntu-latest
     steps:
-      - uses: austenstone/schedule@main
-        id: check
+      - uses: austenstone/schedule@v1
         with:
           github-token: ${{ secrets.TOKEN }}
           date: ${{ github.event.inputs.date }}
           workflow: 'basic.yml'
-          timezone: 'EST'
+          timezone: 'US/Eastern' # US/Central, US/Pacific
+          wait-ms: 45000
 ```
 
 #### Timezone

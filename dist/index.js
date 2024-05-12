@@ -50306,7 +50306,7 @@ const run = async () => {
             return `${schedule.workflow_id}@${schedule.ref} will run ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`;
         }).join('\n')}`);
         const startTime = Date.now().valueOf();
-        return (0, core_1.group)('🚀 Running scheduled workflows', async () => {
+        return (0, core_1.group)('👀 Looking for scheduled workflows to run', async () => {
             do {
                 (0, core_1.info)(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
                 const promises = [];
