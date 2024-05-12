@@ -1,4 +1,4 @@
-import { getInput, group, info, summary } from "@actions/core";
+import { getInput, group, info, setFailed, summary } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import { parseDate } from 'chrono-node'
 import { intervalToDuration } from 'date-fns'
@@ -42,6 +42,7 @@ export const run = async (): Promise<void> => {
     owner: inputs.owner,
     repo: inputs.repo,
   };
+  if (!inputs.token) return setFailed('`github-token` input is required');
   const octokit = getOctokit(inputs.token);
   const inputDate = inputs.date?.trim()?.length > 0 ? parseDate(inputs.date, {
     timezone: inputs.timezone || 'UTC'
