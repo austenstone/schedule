@@ -50251,7 +50251,12 @@ const run = async () => {
         timeStyle: 'medium',
         timeZone: inputs.timezone || 'UTC',
     });
-    const durationString = (start, end) => Object.entries((0, date_fns_1.intervalToDuration)({ start, end })).map(([key, value]) => `${value} ${key}`).join(', ');
+    const durationString = (start, end) => {
+        const duration = (0, date_fns_1.intervalToDuration)({ start, end });
+        if (Object.values(duration).every((value) => value <= 0))
+            return 'NOW!';
+        return Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
+    };
     const variablePrefix = '_SCHEDULE';
     const workflows = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows;
     const workflow = workflows.find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
