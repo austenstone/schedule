@@ -29,7 +29,10 @@ flowchart LR
 https://github.com/austenstone/schedule/assets/22425467/040aa351-cf1a-40e2-99e9-98de5de192bc
 
 ## Usage
-Create a workflow (eg: `.github/workflows/schedule.yml`). See [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file).
+
+Create a workflow (eg: `.github/workflows/schedule.yml`) and copy the [example](#⏩ Example) below. Ensure you've setup the [authentication](#🔑 Authentication) and [inputs](#➡️ Inputs) correctly.
+
+```yml
 
 ### 🔑 Authentication
 
