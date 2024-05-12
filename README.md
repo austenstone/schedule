@@ -24,7 +24,7 @@ graph TD
     U --> A
     T ---> I
 ```
-<details>
+</details>
 
 https://github.com/austenstone/schedule/assets/22425467/040aa351-cf1a-40e2-99e9-98de5de192bc
 
