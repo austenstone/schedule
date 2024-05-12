@@ -1,6 +1,6 @@
 # 📅 Schedule Workflow Runs Action
 
-Schedule your workflows to run at a future date and time! 🤯
+Schedule your GitHub Actions workflows to run at a future date and time! 🤯
 
 This works using the `schedule` event to poll GitHub variables which are used as our database for scheduling.
 
@@ -132,4 +132,4 @@ Various inputs are defined in [`action.yml`](action.yml):
 -->
 
 ## Further help
-To get more help on the Actions see [documentation](https://docs.github.com/en/actions).
+To get more help on the Actions see the [documentation](https://docs.github.com/en/actions).
