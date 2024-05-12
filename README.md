@@ -4,6 +4,28 @@ Schedule your GitHub Actions workflows to run at a future date and time! 🤯
 
 This works using the `schedule` event to poll GitHub variables which are used as our database for scheduling.
 
+<details>
+<summary>Flow Diagram</summary>
+```mermaid
+graph TD
+    A[Start] --> B[Get Workflow Inputs]
+    B --> G{Was this a workflow_dispatch?\nDoes an input date exist?}
+    G -->|Yes| H[Create scheduled workflow]
+    H --> I
+    G -->|No| I[Fetch scheduled workflows]
+    I --> P((For Each\nscheduled\nworkflow))
+    P ---> Q{Is it time to run\nscheduled workflow?}
+    Q ---> |yes| R[Run scheduled workflow]
+    R ---> S[Delete scheduled workflow]
+    S ---> V{Have we waited\n`wait-ms`?}
+    V ---> |no| T[Wait\n`wait-delay-ms`]
+    V ---> |yes| U[Write job summary]
+    Q ---> |no| V
+    U --> A
+    T ---> I
+```
+<details>
+
 https://github.com/austenstone/schedule/assets/22425467/040aa351-cf1a-40e2-99e9-98de5de192bc
 
 ## Usage
