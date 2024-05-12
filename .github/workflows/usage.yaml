@@ -29,3 +29,4 @@ jobs:
         with:
           github-token: ${{ secrets.TOKEN }}
           workflow: 'basic.yml'
+          inputs: ${{ toJson(inputs)}}
