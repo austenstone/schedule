@@ -100,7 +100,8 @@ export const run = async (): Promise<void> => {
     let _schedules = await getSchedules();
     info(`⌚ ${dateTimeFormatter.format(new Date(Date.now()))}`);
     info(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
-      return `${schedule.workflow_id}@${schedule.ref} will run ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
+      const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
+      return `${_workflow?.path || schedule.workflow_id}@${schedule.ref} will run ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
     }).join('\n')}`);
     const startTime = Date.now().valueOf();
     return group('👀 Looking for scheduled workflows to run', async () => {
@@ -110,7 +111,8 @@ export const run = async (): Promise<void> => {
         const promises: Promise<any>[] = [];
         for (const [index, schedule] of _schedules.entries()) {
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
-          info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
+          const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
+          info(`🚀 Running ${_workflow?.name || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
 
           promises.push(octokit.rest.actions.createWorkflowDispatch({
             ...ownerRepo,
