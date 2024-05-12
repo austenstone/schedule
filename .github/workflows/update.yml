@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
 
       - run: npx npm-check-updates -u
       - run: npm i
