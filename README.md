@@ -87,7 +87,7 @@ jobs:
     name: 📅 Schedule
     runs-on: ubuntu-latest
     steps:
-      - uses: austenstone/schedule@v1.2
+      - uses: austenstone/schedule@v1.3
         with:
           github-token: ${{ secrets.TOKEN }}
           date: ${{ github.event.inputs.date }}
