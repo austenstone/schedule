@@ -43,9 +43,9 @@ export const run = async (): Promise<void> => {
     repo: inputs.repo,
   };
   const octokit = getOctokit(inputs.token);
-  const inputDate = parseDate(inputs.date, {
+  const inputDate = inputs.date?.trim() ? parseDate(inputs.date, {
     timezone: inputs.timezone || 'UTC'
-  });
+  }) : undefined;
   const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
     dateStyle: 'full',
     timeStyle: 'medium',
