@@ -114,23 +114,13 @@ In the example below we spend 5 minutes checking the schedule every 20 seconds:
 > [!TIP]
 > You may want to consider that for billing GitHub jobs are rounded up to the nearest minute.
 
-#### Passing Workflow Inputs
-
-You can provide the `workflow_dispatch` inputs you want to provide by using the `inputs` input.
-
-```yml
-        with:
-          inputs: '{"name": "Austen"}'
-```
-
-or from the inputs themselves.
-
-```yml
-        with:
-          inputs: ${{ toJson(github.event.inputs) }}
-```
-
 #### Selecting the workflow to run
+
+Pass in the workflow you want to run. This can be the name, path, or id of the workflow.
+
+```yml
+          workflow: 'basic.yml'
+```
 
 You could provide options for workflows to run. This does interfere with the workflow inputs you might want to pass in.
 
@@ -147,6 +137,22 @@ You could provide options for workflows to run. This does interfere with the wor
         with:
           workflow: ${{ inputs.workflow }}
 ```     
+
+#### Passing Workflow Inputs
+
+You can provide the `workflow_dispatch` inputs you want to provide by using the `inputs` input.
+
+```yml
+        with:
+          inputs: '{"name": "Austen"}'
+```
+
+or from the inputs themselves.
+
+```yml
+        with:
+          inputs: ${{ toJson(github.event.inputs) }}
+```
 
 ### ➡️ Inputs
 Various inputs are defined in [`action.yml`](action.yml):
