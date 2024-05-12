@@ -123,7 +123,8 @@ export const run = async (): Promise<void> => {
         await (async () => await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)))();
       }
       _schedules = await getSchedules();
-    } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
+      console.log(`${Date.now().valueOf() - startTime} < ${inputs.waitDelayMs}`);
+    } while (inputs.waitDelayMs > (Date.now().valueOf() - startTime) && _schedules.length);
     info(`😪 No more workflows to run. I'll try again next time...`);
   };
   const summaryWrite = async () => {
