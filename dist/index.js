@@ -50299,7 +50299,7 @@ const run = async () => {
             (0, core_1.info)(`✅ Scheduled to run ${durationString(new Date(), inputDate)}!`);
         });
     };
-    const scheduleRun = async () => new Promise(async (resolve) => {
+    const scheduleRun = async () => {
         let _schedules = await getSchedules();
         (0, core_1.info)(`⌚ ${dateTimeFormatter.format(new Date(Date.now()))}`);
         (0, core_1.info)(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
@@ -50330,8 +50330,7 @@ const run = async () => {
             _schedules = await getSchedules();
         } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
         (0, core_1.info)(`😪 No more workflows to run. I'll try again next time...`);
-        resolve(null);
-    });
+    };
     const summaryWrite = async () => {
         const schedules = await getSchedules();
         const _summary = core_1.summary.addHeading(`📅 Scheduled Workflows`);

@@ -95,7 +95,7 @@ export const run = async (): Promise<void> => {
       info(`✅ Scheduled to run ${durationString(new Date(), inputDate)}!`)
     });
   }
-  const scheduleRun = async () => new Promise(async (resolve) => {
+  const scheduleRun = async () => {
     let _schedules = await getSchedules();
     info(`⌚ ${dateTimeFormatter.format(new Date(Date.now()))}`);
     info(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
@@ -125,8 +125,7 @@ export const run = async (): Promise<void> => {
       _schedules = await getSchedules();
     } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
     info(`😪 No more workflows to run. I'll try again next time...`);
-    resolve(null);
-  });
+  };
   const summaryWrite = async () => {
     const schedules = await getSchedules();
     const _summary = summary.addHeading(`📅 Scheduled Workflows`);
