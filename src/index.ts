@@ -54,7 +54,7 @@ export const run = async (): Promise<void> => {
   const durationString = (start: Date, end: Date) => {
     const duration = intervalToDuration({ start, end })
     if (Object.values(duration).every((value) => value <= 0)) return 'NOW!';
-    return Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
+    return Object.entries(duration).map(([key, value]) => `in ${value} ${key}`).join(', ');
   };
   const variablePrefix = '_SCHEDULE'
   const workflows = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows;
@@ -92,14 +92,14 @@ export const run = async (): Promise<void> => {
       name: variableName(inputDate),
       value: variableValue(inputs.ref, inputs.inputs),
     }).then(() => {
-      info(`✅ Scheduled to run in ${durationString(new Date(), inputDate)}!`)
+      info(`✅ Scheduled to run ${durationString(new Date(), inputDate)}!`)
     });
   }
   const scheduleRun = async () => new Promise(async (resolve) => {
     let _schedules = await getSchedules();
     info(`⌚ ${dateTimeFormatter.format(new Date(Date.now()))}`);
     info(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
-      return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
+      return `${schedule.workflow_id}@${schedule.ref} will run ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
     }).join('\n')}`);
     const startTime = Date.now().valueOf();
     do {
