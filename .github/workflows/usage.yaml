@@ -32,4 +32,4 @@ jobs:
           date: ${{ github.event.inputs.date }}
           workflow: 'basic.yml'
           timezone: 'EST'
-          inputs: ${{ inputs }}
+          inputs: ${{ toJson(inputs) }}
