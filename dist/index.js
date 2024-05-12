@@ -50262,6 +50262,8 @@ const run = async () => {
     const variableValue = (ref, inputs) => `${ref},${JSON.stringify(inputs)}`;
     const getSchedules = async () => {
         const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
+        if (!variables)
+            return [];
         const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
             const parts = variable.name.split('_');
             const valParts = variable.value.split(/,(.*)/s);
