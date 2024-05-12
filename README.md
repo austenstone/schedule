@@ -35,7 +35,7 @@ To schedule a workflow, manually do a `workflow_dispatch` by going to "Actions >
 name: 📅 Schedule Workflow Dispatch
 on:
   schedule:
-    - cron: '0 */1 * * *'
+    - cron: '0 */1 * * *' # every hour
   workflow_dispatch:
     inputs:
       date:
