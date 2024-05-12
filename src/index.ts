@@ -55,7 +55,7 @@ export const run = async (): Promise<void> => {
   const durationString = (start: Date, end: Date) => {
     const duration = intervalToDuration({ start, end })
     if (Object.values(duration).every((value) => value <= 0)) return 'NOW!';
-    return Object.entries(duration).map(([key, value]) => `in ${value} ${key}`).join(', ');
+    return 'in ' + Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
   };
   const variablePrefix = '_SCHEDULE'
   const workflows = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows;

@@ -50242,6 +50242,8 @@ const run = async () => {
         owner: inputs.owner,
         repo: inputs.repo,
     };
+    if (!inputs.token)
+        return (0, core_1.setFailed)('`github-token` input is required');
     const octokit = (0, github_1.getOctokit)(inputs.token);
     const inputDate = inputs.date?.trim()?.length > 0 ? (0, chrono_node_1.parseDate)(inputs.date, {
         timezone: inputs.timezone || 'UTC'
@@ -50255,7 +50257,7 @@ const run = async () => {
         const duration = (0, date_fns_1.intervalToDuration)({ start, end });
         if (Object.values(duration).every((value) => value <= 0))
             return 'NOW!';
-        return Object.entries(duration).map(([key, value]) => `in ${value} ${key}`).join(', ');
+        return 'in ' + Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
     };
     const variablePrefix = '_SCHEDULE';
     const workflows = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows;
