@@ -166,6 +166,7 @@ export const run = async (): Promise<void> => {
   };
 
 
+  console.log(inputs.date, inputDate);
   if (context.eventName === 'workflow_dispatch' && inputDate) {
     await scheduleAdd();
   }
