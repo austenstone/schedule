@@ -12,7 +12,7 @@ Create a workflow (eg: `.github/workflows/schedule.yml`). See [Creating a Workfl
 ### Authentication
 
 #### GitHub App
-Use the [actions/create-github-app-token](https://github.com/actions/create-github-app-token?tab=readme-ov-file#create-github-app-token) action to create a GitHub App token and add it to your repository secrets as `TOKEN`.
+Create a GitHub App with the `repo` scope. Use the [actions/create-github-app-token](https://github.com/actions/create-github-app-token?tab=readme-ov-file#create-github-app-token) action to create a GitHub App token and add it to your repository secrets as `TOKEN`.
 
 #### Personal Access Token (PAT)
 You need to create a Personal Access Token (PAT) with the `repo` scope and add it to your repository secrets as `TOKEN`.
@@ -38,9 +38,9 @@ on:
         description: 'Date to run the workflow'
         required: true
         type: string
-        default: '2024-05-11'
+        default: 'in 1 hour'
 concurrency:
-  group: 'schedule'
+  group: schedule${{ github.event.inputs.date }}
   cancel-in-progress: true
 
 jobs:
@@ -77,18 +77,19 @@ In the example below we check the schedule every 20 seconds for 5 minutes.
           wait-delay-ms: 20000
 ```
 
-You may want to consider that GitHub jobs are rounded up to the nearest minute.
+> [!TIP]
+> You may want to consider that for billing GitHub jobs are rounded up to the nearest minute.
 
-#### Providing Inputs
+#### Passing Workflow Inputs
 
-You can provide inputs to the workflow you want to run by using the `inputs` input.
+You can provide the `workflow_dispatch` inputs you want to provide by using the `inputs` input.
 
 ```yml
         with:
           inputs: '{"name": "Austen"}'
 ```
 
-or from the `workflow_dispatch` input.
+or from the inputs themselves.
 
 ```yml
         with:
