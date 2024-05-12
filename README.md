@@ -9,7 +9,7 @@ https://github.com/austenstone/schedule/assets/22425467/040aa351-cf1a-40e2-99e9-
 ## Usage
 Create a workflow (eg: `.github/workflows/schedule.yml`). See [Creating a Workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file).
 
-### Authentication
+### 🔑 Authentication
 
 #### GitHub App
 Create a GitHub App with the `repo` scope. Use the [actions/create-github-app-token](https://github.com/actions/create-github-app-token?tab=readme-ov-file#create-github-app-token) action to create a GitHub App token and add it to your repository secrets as `TOKEN`.
@@ -17,7 +17,7 @@ Create a GitHub App with the `repo` scope. Use the [actions/create-github-app-to
 #### Personal Access Token (PAT)
 You need to create a Personal Access Token (PAT) with the `repo` scope and add it to your repository secrets as `TOKEN`.
 
-### Example
+### ⏩ Example
 
 This workflow runs on a `schedule` event every hour and spends <1min checking the schedule for any pending workflows to run.
 
@@ -108,7 +108,7 @@ or from the inputs themselves.
           inputs: ${{ toJson(github.event.inputs) }}
 ```
 
-## ➡️ Inputs
+### ➡️ Inputs
 Various inputs are defined in [`action.yml`](action.yml):
 
 | Name | Description | Default |
