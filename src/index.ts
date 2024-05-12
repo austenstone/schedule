@@ -1,4 +1,4 @@
-import { getInput, group, info, setFailed, summary } from "@actions/core";
+import { getInput, group, info, setFailed, summary, warning } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import { parseDate } from 'chrono-node'
 import { intervalToDuration } from 'date-fns'
@@ -119,12 +119,16 @@ export const run = async (): Promise<void> => {
           const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
           info(`🚀 Running ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
 
-          promises.push(octokit.rest.actions.createWorkflowDispatch({
-            ...ownerRepo,
-            workflow_id: schedule.workflow_id,
-            ref: schedule.ref,
-            inputs: schedule.inputs
-          }));
+          promises.push(
+            octokit.rest.actions.createWorkflowDispatch({
+              ...ownerRepo,
+              workflow_id: schedule.workflow_id,
+              ref: schedule.ref,
+              inputs: schedule.inputs
+            }).catch((err) => {
+              warning(`⚠️ Failed to run ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}: ${err instanceof Error ? err.message : err}`);
+            })
+          );
 
           promises.push(octokit.rest.actions.deleteRepoVariable({
             ...ownerRepo,

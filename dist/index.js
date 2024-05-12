@@ -50327,6 +50327,8 @@ const run = async () => {
                         workflow_id: schedule.workflow_id,
                         ref: schedule.ref,
                         inputs: schedule.inputs
+                    }).catch((err) => {
+                        (0, core_1.warning)(`⚠️ Failed to run ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}: ${err instanceof Error ? err.message : err}`);
                     }));
                     promises.push(octokit.rest.actions.deleteRepoVariable({
                         ...ownerRepo,
