@@ -8,22 +8,20 @@ This works using the `schedule` event to poll GitHub variables which are used as
 <summary>Flow Diagram</summary>
 
 ```mermaid
-graph TD
-    A[Start] --> B[Get Workflow Inputs]
-    B --> G{Was this a workflow_dispatch?\nDoes an input date exist?}
-    G -->|Yes| H[Create scheduled workflow]
-    H --> I
-    G -->|No| I[Fetch scheduled workflows]
+flowchart LR
+    A([`workflow_dispatch`]) --> H[Create scheduled workflow]
+    W([`schedule`]) ---> I
+    B([`other`]) ---> I
+    H --> I[Fetch scheduled workflows]
     I --> P((For Each\nscheduled\nworkflow))
-    P ---> Q{Is it time to run\nscheduled workflow?}
-    Q ---> |yes| R[Run scheduled workflow]
-    R ---> S[Delete scheduled workflow]
-    S ---> V{Have we waited\n`wait-ms`?}
-    V ---> |no| T[Wait\n`wait-delay-ms`]
-    V ---> |yes| U[Write job summary]
-    Q ---> |no| V
-    U --> A
-    T ---> I
+    P --> Q{Is it time to run\nscheduled workflow?}
+    Q --> |yes| R[Run scheduled workflow]
+    R --> S[Delete scheduled workflow]
+    S --> V{Have we waited\n`wait-ms`?}
+    V --> |no| T[Wait\n`wait-delay-ms`]
+    T --> I
+    V --> |yes| U[Write job summary]
+    Q --> |no| V
 ```
 
 </details>
