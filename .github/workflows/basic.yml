@@ -5,8 +5,8 @@ on:
     inputs:
       name:
         description: 'Name of the person to greet'
-        required: true
-        default: 'Mona the Octocat'
+        required: false
+        default: 'Bob the Builder'
 
 jobs:
   build:
