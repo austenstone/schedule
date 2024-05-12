@@ -50353,7 +50353,9 @@ const run = async () => {
                     { data: 'Ref', header: true },
                     { data: 'Path', header: true }
                 ],
-                ...schedules.map((schedule) => {
+                ...schedules
+                    .sort((a, b) => a.date.valueOf() - b.date.valueOf())
+                    .map((schedule) => {
                     const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
                     return [_workflow?.name || schedule.workflow_id, dateTimeFormatter.format(schedule.date), schedule.ref, _workflow?.path || 'unknown'];
                 })
