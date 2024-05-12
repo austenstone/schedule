@@ -70,8 +70,7 @@ export const run = async (): Promise<void> => {
       const valParts = variable.value.split(/,(.*)/s);
       console.log(valParts);
       const workflowInputs = valParts[1] && valParts[1].trim().length > 0 ? JSON.parse(valParts[1]) : undefined;
-      console.log(workflowInputs);
-      delete workflowInputs.date;
+      if (workflowInputs?.date) delete workflowInputs.date;
       return {
         variableName: variable.name,
         workflow_id: parts[2],
