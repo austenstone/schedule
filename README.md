@@ -57,6 +57,14 @@ jobs:
           timezone: 'EST'
 ```
 
+#### Timezone
+
+The timezone is set to `EST` by default. You can change this to your timezone. EX: `US/Central`, `US/Pacific`, [etc](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+
+```yml
+          timezone: 'US/Eastern'
+```
+
 #### Changing when to check the schedule
 
 The [`schedule`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule) event is used to check for scheduled workflow runs. You can change the cron to run at a different interval.
