@@ -81,7 +81,7 @@ on:
 
 The action also has the ability to continue running the workflow and polling for a specific amount of time. This is useful if you want to run the workflow at a specific time and then continue running the workflow for a specific amount of time.
 
-In the example below we check the schedule every 20 seconds for 5 minutes.
+In the example below we spend 5 minutes checking the schedule every 20 seconds:
 
 ```yml
         with:
