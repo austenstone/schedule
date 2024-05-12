@@ -72,7 +72,7 @@ jobs:
         # queries: security-extended,security-and-quality
         config: |
           paths-ignore:
-            dist
+            - dist
 
     # If the analyze step fails for one of the languages you are analyzing with
     # "We were unable to automatically build your code", modify the matrix above
