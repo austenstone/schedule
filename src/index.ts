@@ -104,7 +104,6 @@ export const run = async (): Promise<void> => {
     }).join('\n')}`);
     const startTime = Date.now().valueOf();
     return group('👀 Looking for scheduled workflows to run', async () => {
-
       do {
         info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
