@@ -52,6 +52,8 @@ The token must have the following permission set:
 
 ### ⏩ Example
 
+<img align="right" src="https://github.com/austenstone/schedule/assets/22425467/c0e844ec-11b2-4449-919d-c03786ff066a" width="250px">
+
 This workflow runs on a [`schedule`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule) event every hour and spends <1min checking the schedule for any pending workflows to run.
 
 To schedule a workflow, manually do a [`workflow_dispatch`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch) by going to "Actions > 📅 Schedule Workflow Dispatch", type when you want the workflow to run, and click Run workflow.
