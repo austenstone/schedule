@@ -57,9 +57,9 @@ jobs:
           timezone: 'EST'
 ```
 
-#### Changing when to run the schedule
+#### Changing when to check the schedule
 
-The [`schedule`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule) event is used to run the workflow every hour. You can change the cron to run at a different interval.
+The [`schedule`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule) event is used to check for scheduled workflow runs. You can change the cron to run at a different interval.
 
 ```yml
 on:
