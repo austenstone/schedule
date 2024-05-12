@@ -50258,16 +50258,19 @@ const run = async () => {
         throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
     }
     const workflowId = workflow?.id;
-    const variableName = (date) => `${variablePrefix}_${workflowId}_${date.valueOf()}`;
+    const variableName = (date) => [variablePrefix, workflowId, date.valueOf()].join('_');
+    const variableValue = (ref, inputs) => `${ref},${JSON.stringify(inputs)}`;
     const getSchedules = async () => {
         const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
         const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
             const parts = variable.name.split('_');
+            const valParts = variable.value.split(/,(.*)/s);
             return {
                 variableName: variable.name,
                 workflow_id: parts[2],
                 date: new Date(+parts[3]),
-                ref: variable.value
+                ref: valParts[0],
+                inputs: valParts[1]
             };
         });
         return schedules;
@@ -50280,7 +50283,7 @@ const run = async () => {
         return octokit.rest.actions.createRepoVariable({
             ...ownerRepo,
             name: variableName(inputDate),
-            value: inputs.ref,
+            value: variableValue(inputs.ref, inputs.inputs),
         }).then(() => {
             (0, core_1.info)(`✅ Scheduled to run in ${durationString(new Date(), inputDate)}!`);
         });
