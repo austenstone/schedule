@@ -23,7 +23,10 @@ This workflow runs on a `schedule` event every hour and checks the schedule for 
 
 To schedule a workflow, manually do a `workflow_dispatch` by going to "Actions > 📅 Schedule Workflow Dispatch", type when you want the workflow to run, and click Run workflow.
 
-To use this workflow you want to replace the `workflow` input with the name, path, or id of the workflow you want to run. You should also change the `timezone` input to your timezone.
+#### Inputs
+
+* Replace the `workflow` input with the name, path, or id of the workflow you want to run
+* Change the `timezone` input to your timezone
 
 Make sure you've set your PAT to the `TOKEN` secret in your repository settings.
 
