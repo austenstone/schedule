@@ -1,4 +1,4 @@
-import { getInput, info, summary } from "@actions/core";
+import { getInput, group, info, summary } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import { parseDate } from 'chrono-node'
 import { intervalToDuration } from 'date-fns'
@@ -102,37 +102,39 @@ export const run = async (): Promise<void> => {
       return `${schedule.workflow_id}@${schedule.ref} will run ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
     }).join('\n')}`);
     const startTime = Date.now().valueOf();
-    do {
-      info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
-      const promises = [] as Promise<any>[];
-      for (const [index, schedule] of _schedules.entries()) {
-        if (Date.now().valueOf() < schedule.date.valueOf()) continue;
-        info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
+    return group('🚀 Running scheduled workflows', async () => {
 
-        promises.push(octokit.rest.actions.createWorkflowDispatch({
-          ...ownerRepo,
-          workflow_id: schedule.workflow_id,
-          ref: schedule.ref,
-          inputs: schedule.inputs
-        }));
+      do {
+        info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
+        const promises = [] as Promise<any>[];
+        for (const [index, schedule] of _schedules.entries()) {
+          if (Date.now().valueOf() < schedule.date.valueOf()) continue;
+          info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
 
-        promises.push(octokit.rest.actions.deleteRepoVariable({
-          ...ownerRepo,
-          name: schedule.variableName,
-        }));
+          promises.push(octokit.rest.actions.createWorkflowDispatch({
+            ...ownerRepo,
+            workflow_id: schedule.workflow_id,
+            ref: schedule.ref,
+            inputs: schedule.inputs
+          }));
 
-        _schedules.splice(index, 1);
-      }
+          promises.push(octokit.rest.actions.deleteRepoVariable({
+            ...ownerRepo,
+            name: schedule.variableName,
+          }));
 
-      if (inputs.waitMs > 0) {
-        promises.push(new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)));
-      }
+          _schedules.splice(index, 1);
+        }
 
-      await Promise.all(promises);
-      _schedules = await getSchedules();
-      console.log(`${Date.now().valueOf() - startTime} < ${inputs.waitDelayMs}`);
-    } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
-    info(`😪 No more workflows to run. I'll try again next time...`);
+        if (inputs.waitMs > 0) {
+          promises.push(new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)));
+        }
+
+        await Promise.all(promises);
+        _schedules = await getSchedules();
+      } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
+      info(`😪 No more workflows to run. I'll try again next time...`);
+    });
   };
   const summaryWrite = async () => {
     const schedules = await getSchedules();

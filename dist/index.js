@@ -50330,7 +50330,6 @@ const run = async () => {
             }
             await Promise.all(promises);
             _schedules = await getSchedules();
-            console.log(`${Date.now().valueOf() - startTime} < ${inputs.waitDelayMs}`);
         } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
         (0, core_1.info)(`😪 No more workflows to run. I'll try again next time...`);
     };
