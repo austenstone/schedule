@@ -93,7 +93,7 @@ export const run = async (): Promise<void> => {
   }
   const scheduleRun = async () => new Promise(async (resolve) => {
     let _schedules = await getSchedules();
-    info(`👀 Checking for scheduled workflows... It's currently ${dateTimeFormatter.format(new Date(Date.now()))}`);
+    info(`⌚ ${dateTimeFormatter.format(new Date(Date.now()))}`);
     info(`📅 Found ${_schedules.length} scheduled workflows:\n${_schedules.map((schedule) => {
       return `${schedule.workflow_id}@${schedule.ref} will run in ${durationString(new Date(Date.now()), schedule.date)} (${dateTimeFormatter.format(schedule.date)})}`
     }).join('\n')}`);
