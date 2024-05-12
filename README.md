@@ -1,8 +1,8 @@
 # 📅 Schedule Workflow Runs Action
 
-Schedule your workflows to run at a future date and time.
+Schedule your workflows to run at a future date and time! 🤯
 
-This works using the `schedule` event to poll GitHub variables which are used as a database.
+This works using the `schedule` event to poll GitHub variables which are used as our database for scheduling.
 
 https://github.com/austenstone/schedule/assets/22425467/040aa351-cf1a-40e2-99e9-98de5de192bc
 
