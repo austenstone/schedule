@@ -85,8 +85,8 @@ In the example below we check the schedule every 20 seconds for 5 minutes.
 
 ```yml
         with:
-          wait-ms: 300000
-          wait-delay-ms: 20000
+          wait-ms: 300000 # Check for 5 minutes
+          wait-delay-ms: 20000 # Wait 20 seconds between checks
 ```
 
 > [!TIP]
