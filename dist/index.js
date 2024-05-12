@@ -50316,30 +50316,28 @@ const run = async () => {
         return (0, core_1.group)('👀 Looking for scheduled workflows to run', async () => {
             do {
                 (0, core_1.info)(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
-                const promises = [];
                 for (const [index, schedule] of _schedules.entries()) {
                     if (Date.now().valueOf() < schedule.date.valueOf())
                         continue;
                     const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
                     (0, core_1.info)(`🚀 Running ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
-                    promises.push(octokit.rest.actions.createWorkflowDispatch({
+                    await octokit.rest.actions.createWorkflowDispatch({
                         ...ownerRepo,
                         workflow_id: schedule.workflow_id,
                         ref: schedule.ref,
                         inputs: schedule.inputs
                     }).catch((err) => {
                         (0, core_1.warning)(`⚠️ Failed to run ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}: ${err instanceof Error ? err.message : err}`);
-                    }));
-                    promises.push(octokit.rest.actions.deleteRepoVariable({
+                    });
+                    await octokit.rest.actions.deleteRepoVariable({
                         ...ownerRepo,
                         name: schedule.variableName,
-                    }));
+                    });
                     _schedules.splice(index, 1);
                 }
                 if (inputs.waitMs > 0) {
-                    promises.push(new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)));
+                    await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs));
                 }
-                await Promise.all(promises);
                 _schedules = await getSchedules();
             } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
             (0, core_1.info)(`😪 No more workflows to run. I'll try again next time...`);

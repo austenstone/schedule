@@ -112,37 +112,32 @@ export const run = async (): Promise<void> => {
     return group('👀 Looking for scheduled workflows to run', async () => {
       do {
         info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const promises: Promise<any>[] = [];
         for (const [index, schedule] of _schedules.entries()) {
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
           const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
           info(`🚀 Running ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
 
-          promises.push(
-            octokit.rest.actions.createWorkflowDispatch({
-              ...ownerRepo,
-              workflow_id: schedule.workflow_id,
-              ref: schedule.ref,
-              inputs: schedule.inputs
-            }).catch((err) => {
-              warning(`⚠️ Failed to run ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}: ${err instanceof Error ? err.message : err}`);
-            })
-          );
+          await octokit.rest.actions.createWorkflowDispatch({
+            ...ownerRepo,
+            workflow_id: schedule.workflow_id,
+            ref: schedule.ref,
+            inputs: schedule.inputs
+          }).catch((err) => {
+            warning(`⚠️ Failed to run ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}: ${err instanceof Error ? err.message : err}`);
+          })
 
-          promises.push(octokit.rest.actions.deleteRepoVariable({
+          await octokit.rest.actions.deleteRepoVariable({
             ...ownerRepo,
             name: schedule.variableName,
-          }));
+          })
 
           _schedules.splice(index, 1);
         }
 
         if (inputs.waitMs > 0) {
-          promises.push(new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)));
+          await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs));
         }
 
-        await Promise.all(promises);
         _schedules = await getSchedules();
       } while (inputs.waitMs > (Date.now().valueOf() - startTime) && _schedules.length);
       info(`😪 No more workflows to run. I'll try again next time...`);
