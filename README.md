@@ -32,8 +32,6 @@ https://github.com/austenstone/schedule/assets/22425467/040aa351-cf1a-40e2-99e9-
 
 Create a workflow (eg: `.github/workflows/schedule.yml`) and copy the [example](#⏩ Example) below. Ensure you've setup the [authentication](#🔑 Authentication) and [inputs](#➡️ Inputs) correctly.
 
-```yml
-
 ### 🔑 Authentication
 
 #### GitHub App
