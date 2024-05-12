@@ -33,3 +33,4 @@ jobs:
           github-token: ${{ secrets.TOKEN }}
           workflow: ${{ inputs.workflow }}
           inputs: ${{ toJson(inputs)}}
+          inputs-ignore: date,workflow

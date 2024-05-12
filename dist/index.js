@@ -50234,6 +50234,7 @@ const getInputs = () => {
     result.timezone = (0, core_1.getInput)("timezone");
     const workflowInputs = (0, core_1.getInput)("inputs");
     result.inputs = workflowInputs && workflowInputs.trim().length > 0 ? JSON.parse(workflowInputs) : undefined;
+    result.inputsIgnore = (0, core_1.getInput)("inputs-ignore");
     return result;
 };
 const run = async () => {
@@ -50276,8 +50277,11 @@ const run = async () => {
             const parts = variable.name.split('_');
             const valParts = variable.value.split(/,(.*)/s);
             const workflowInputs = valParts[1] && valParts[1].trim().length > 0 ? JSON.parse(valParts[1]) : undefined;
-            if (workflowInputs?.date)
-                delete workflowInputs.date;
+            const inputsIgnore = inputs.inputsIgnore?.split(',').map((key) => key.trim());
+            inputsIgnore?.forEach((key) => {
+                if (workflowInputs?.[key])
+                    delete workflowInputs[key];
+            });
             return {
                 variableName: variable.name,
                 workflow_id: parts[2],

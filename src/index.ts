@@ -14,6 +14,7 @@ interface Input {
   ref: string;
   timezone: string;
   inputs: object;
+  inputsIgnore: string;
 }
 
 const getInputs = (): Input => {
@@ -32,6 +33,7 @@ const getInputs = (): Input => {
   result.timezone = getInput("timezone");
   const workflowInputs = getInput("inputs");
   result.inputs = workflowInputs && workflowInputs.trim().length > 0 ? JSON.parse(workflowInputs) : undefined;
+  result.inputsIgnore = getInput("inputs-ignore");
 
   return result;
 }
@@ -73,7 +75,10 @@ export const run = async (): Promise<void> => {
       const parts = variable.name.split('_');
       const valParts = variable.value.split(/,(.*)/s);
       const workflowInputs = valParts[1] && valParts[1].trim().length > 0 ? JSON.parse(valParts[1]) : undefined;
-      if (workflowInputs?.date) delete workflowInputs.date;
+      const inputsIgnore = inputs.inputsIgnore?.split(',').map((key) => key.trim());
+      inputsIgnore?.forEach((key) => {
+        if (workflowInputs?.[key]) delete workflowInputs[key];
+      });
       return {
         variableName: variable.name,
         workflow_id: parts[2],

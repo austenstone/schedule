@@ -45,6 +45,10 @@ inputs:
     description: 'Inputs to pass to the workflow'
     default: ${{ toJson(github.event.inputs) }}
     required: false
+  inputs-ignore:
+    description: 'Inputs to ignore when passing to the workflow'
+    default: 'date,workflow'
+    required: false
 
 runs:
   using: "node20"

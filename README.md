@@ -131,8 +131,8 @@ Various inputs are defined in [`action.yml`](action.yml):
 
 | Name | Description | Default |
 | --- | - | - |
-| github-token | The GitHub token used to create an authenticated client | ${{ github.token }} |
-| workflow | Workflow to run at schedule time |  |
+| *github-token* | The GitHub token used to create an authenticated client | ${{ github.token }} |
+| *workflow* | Workflow to run at schedule time |  |
 | date | Date to run the workflow | ${{ github.event.inputs.date }} |
 | wait-ms | Milliseconds to wait | 0 |
 | wait-delay-ms | Milliseconds to wait between checks on the schedule | 20000 |
@@ -141,6 +141,7 @@ Various inputs are defined in [`action.yml`](action.yml):
 | repo | Optional repository name to run the workflow on. | ${{ github.repository }} |
 | timezone | Timezone to use for the schedule | EST |
 | inputs | Inputs to pass to the workflow |
+| inputs-ignore | Inputs to ignore when passing to the workflow | date,workflow |
 
 <!-- 
 ## ⬅️ Outputs
