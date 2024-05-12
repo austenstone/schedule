@@ -106,7 +106,8 @@ export const run = async (): Promise<void> => {
 
       do {
         info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
-        const promises = [] as Promise<any>[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const promises: Promise<any>[] = [];
         for (const [index, schedule] of _schedules.entries()) {
           if (Date.now().valueOf() < schedule.date.valueOf()) continue;
           info(`🚀 Running ${schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
