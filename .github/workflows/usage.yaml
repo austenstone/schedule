@@ -27,10 +27,15 @@ jobs:
     name: 📅 Schedule
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
       - uses: actions/checkout@v4
       - uses: ./
         with:
-          github-token: ${{ secrets.TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           workflow: ${{ inputs.workflow }}
           inputs: ${{ toJson(inputs)}}
           inputs-ignore: date,workflow

@@ -34,7 +34,9 @@ Create a workflow (eg: `.github/workflows/schedule.yml`). See [Creating a Workfl
 ### 🔑 Authentication
 
 #### GitHub App
-Create a GitHub App with the `repo` scope. Use the [actions/create-github-app-token](https://github.com/actions/create-github-app-token?tab=readme-ov-file#create-github-app-token) action to create a GitHub App token and add it to your repository secrets as `TOKEN`.
+* [Create a GitHub App](https://github.com/settings/apps/new?name=actions-scheduler&description=Schedule%20GitHub%20Actions%20runs.&url=https://github.com&public=false&actions=write&actions_variables=write&webhook_active=false) with the `actions` & `actions_variables` scope.
+
+* Use the [actions/create-github-app-token](https://github.com/actions/create-github-app-token?tab=readme-ov-file#create-github-app-token) action to create a GitHub App token and add it to your repository secrets as `TOKEN`.
 
 #### Personal Access Token (PAT)
 You need to create a Personal Access Token (PAT) with the `repo` scope and add it to your repository secrets as `TOKEN`.
