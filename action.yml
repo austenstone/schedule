@@ -2,7 +2,7 @@ name: Schedule
 author: Austen Stone
 description: Schedule a workflow to run at a specific time
 branding:
-  icon: "plus"
+  icon: "calendar"
   color: "blue"
 
 inputs:
