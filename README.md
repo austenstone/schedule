@@ -2,7 +2,7 @@
 
 Schedule your GitHub Actions workflows to run at a future date and time! 🤯
 
-This works using the `schedule` event to poll GitHub variables which are used as our database for scheduling.
+This works using the [`schedule`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule) event to poll GitHub variables which are used as our database for scheduling.
 
 <details>
 <summary>Flow Diagram</summary>
@@ -41,9 +41,9 @@ You need to create a Personal Access Token (PAT) with the `repo` scope and add i
 
 ### ⏩ Example
 
-This workflow runs on a `schedule` event every hour and spends <1min checking the schedule for any pending workflows to run.
+This workflow runs on a [`schedule`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule) event every hour and spends <1min checking the schedule for any pending workflows to run.
 
-To schedule a workflow, manually do a `workflow_dispatch` by going to "Actions > 📅 Schedule Workflow Dispatch", type when you want the workflow to run, and click Run workflow.
+To schedule a workflow, manually do a [`workflow_dispatch`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch) by going to "Actions > 📅 Schedule Workflow Dispatch", type when you want the workflow to run, and click Run workflow.
 
 #### Inputs
 
@@ -140,7 +140,7 @@ You could provide options for workflows to run. This does interfere with the wor
 
 #### Passing Workflow Inputs
 
-You can provide the `workflow_dispatch` inputs you want to provide by using the `inputs` input.
+You can provide the [`workflow_dispatch`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch) inputs you want to provide by using the `inputs` input.
 
 ```yml
         with:
