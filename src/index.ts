@@ -122,13 +122,11 @@ export const run = async (): Promise<void> => {
             workflow_id: schedule.workflow_id,
             ref: schedule.ref,
             inputs: schedule.inputs
-          }).catch((err) => {
-            warning(`Failed to run ${_workflow?.path || schedule.workflow_id}@${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}:\nError: ${err instanceof Error ? err.message : err}`);
-          })
-
-          await octokit.rest.actions.deleteRepoVariable({
+          }).then(() => octokit.rest.actions.deleteRepoVariable({
             ...ownerRepo,
             name: schedule.variableName,
+          })).catch((err) => {
+            warning(`Failed to run ${_workflow?.path || schedule.workflow_id}@${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}:\nError: ${err instanceof Error ? err.message : err}`);
           })
 
           _schedules.splice(index, 1);
