@@ -50232,7 +50232,8 @@ const getInputs = () => {
     result.workflow = (0, core_1.getInput)("workflow");
     result.ref = (0, core_1.getInput)("ref");
     result.timezone = (0, core_1.getInput)("timezone");
-    result.inputs = (0, core_1.getInput)("inputs");
+    const workflowInputs = (0, core_1.getInput)("inputs");
+    result.inputs = workflowInputs && workflowInputs.trim().length > 0 ? JSON.parse(workflowInputs) : undefined;
     return result;
 };
 const run = async () => {
@@ -50259,17 +50260,14 @@ const run = async () => {
     }
     const workflowId = workflow?.id;
     const variableName = (date) => [variablePrefix, workflowId, date.valueOf()].join('_');
-    const variableValue = (ref, inputs) => `${ref},${JSON.stringify(inputs)}`;
+    const variableValue = (ref, inputs) => `${ref},${inputs ? JSON.stringify(inputs) : ''}`;
     const getSchedules = async () => {
         const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
         if (!variables)
             return [];
         const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
-            console.log(variable);
             const parts = variable.name.split('_');
-            console.log(parts);
             const valParts = variable.value.split(/,(.*)/s);
-            console.log(valParts);
             const workflowInputs = valParts[1] && valParts[1].trim().length > 0 ? JSON.parse(valParts[1]) : undefined;
             if (workflowInputs?.date)
                 delete workflowInputs.date;
