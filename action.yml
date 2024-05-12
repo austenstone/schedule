@@ -16,7 +16,7 @@ inputs:
   date:
     description: 'Date to run the workflow'
     required: false
-    default: ${{ inputs.date }}
+    default: ${{ github.event.inputs.date }}
   wait-ms:
     description: 'Milliseconds to wait'
     required: false
@@ -43,7 +43,7 @@ inputs:
     default: 'US/Eastern'
   inputs:
     description: 'Inputs to pass to the workflow'
-    default: ${{ toJson(inputs) }}
+    default: ${{ toJson(github.event.inputs) }}
     required: false
 
 runs:
