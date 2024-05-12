@@ -108,6 +108,24 @@ or from the inputs themselves.
           inputs: ${{ toJson(github.event.inputs) }}
 ```
 
+#### Selecting the workflow to run
+
+You could provide options for workflows to run. This does interfere with the workflow inputs you might want to pass in.
+
+```yml
+
+      workflow:
+        description: 'Workflow to run at schedule time'
+        required: true
+        type: choice
+        options:
+          - 'basic.yml'
+          - 'codeql.yml'
+...
+        with:
+          workflow: ${{ inputs.workflow }}
+```     
+
 ### ➡️ Inputs
 Various inputs are defined in [`action.yml`](action.yml):
 

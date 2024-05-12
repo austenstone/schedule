@@ -11,10 +11,13 @@ on:
         required: true
         type: string
         default: 'in 1 hour'
-      name:
-        description: 'Name of the person to greet'
-        required: false
-        default: 'Mona the Octocat'
+      workflow:
+        description: 'Workflow to run at schedule time'
+        required: true
+        type: choice
+        options:
+          - 'basic.yml'
+          - 'codeql.yml'
 concurrency:
   group: schedule
   cancel-in-progress: true
@@ -28,5 +31,5 @@ jobs:
       - uses: ./
         with:
           github-token: ${{ secrets.TOKEN }}
-          workflow: 'basic.yml'
+          workflow: ${{ inputs.workflow }}
           inputs: ${{ toJson(inputs)}}
