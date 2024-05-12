@@ -50243,9 +50243,9 @@ const run = async () => {
         repo: inputs.repo,
     };
     const octokit = (0, github_1.getOctokit)(inputs.token);
-    const inputDate = (0, chrono_node_1.parseDate)(inputs.date, {
+    const inputDate = inputs.date?.trim()?.length > 0 ? (0, chrono_node_1.parseDate)(inputs.date, {
         timezone: inputs.timezone || 'UTC'
-    });
+    }) : undefined;
     const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
         dateStyle: 'full',
         timeStyle: 'medium',
