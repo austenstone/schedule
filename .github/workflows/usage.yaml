@@ -32,5 +32,5 @@ jobs:
           workflow: 'basic.yml'
           timezone: 'US/Eastern' # US/Central, US/Pacific https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
           inputs: ${{ toJson(inputs) }}
-          wait-ms: 60000
+          wait-ms: 50000
           wait-delay-ms: 1000
