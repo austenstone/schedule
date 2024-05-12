@@ -114,10 +114,10 @@ Various inputs are defined in [`action.yml`](action.yml):
 | Name | Description | Default |
 | --- | - | - |
 | github-token | The GitHub token used to create an authenticated client | ${{ github.token }} |
+| workflow | Workflow to run at schedule time |  |
 | date | Date to run the workflow | Tomorrow at noon |
 | wait-ms | Milliseconds to wait | 0 |
 | wait-delay-ms | Milliseconds to wait between checks on the schedule | 20000 |
-| workflow | Workflow to run at schedule time |  |
 | ref | Branch to run the workflow on | ${{ github.ref }} |
 | owner | Optional repository owner to run the workflow on. | ${{ github.repository_owner }} |
 | repo | Optional repository name to run the workflow on. | ${{ github.repository }} |

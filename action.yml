@@ -10,10 +10,13 @@ inputs:
     description: The GitHub token used to create an authenticated client
     default: ${{ github.token }}
     required: false
+  workflow:
+    description: 'Workflow to run at schedule time'
+    required: true
   date:
     description: 'Date to run the workflow'
     required: false
-    default: 'Tomorrow at noon'
+    default: ${{ inputs.date }}
   wait-ms:
     description: 'Milliseconds to wait'
     required: false
@@ -22,9 +25,6 @@ inputs:
     description: 'Milliseconds to wait between checks on the schedule'
     required: false
     default: 20000
-  workflow:
-    description: 'Workflow to run at schedule time'
-    required: false
   ref:
     description: 'Branch to run the workflow on'
     required: false
@@ -40,9 +40,10 @@ inputs:
   timezone:
     description: 'Timezone to use for the schedule'
     required: false
-    default: 'EST'
+    default: 'US/Eastern'
   inputs:
     description: 'Inputs to pass to the workflow'
+    default: ${{ toJson(inputs) }}
     required: false
 
 runs:
