@@ -6,6 +6,7 @@ This works using the `schedule` event to poll GitHub variables which are used as
 
 <details>
 <summary>Flow Diagram</summary>
+
 ```mermaid
 graph TD
     A[Start] --> B[Get Workflow Inputs]
@@ -24,6 +25,7 @@ graph TD
     U --> A
     T ---> I
 ```
+
 </details>
 
 https://github.com/austenstone/schedule/assets/22425467/040aa351-cf1a-40e2-99e9-98de5de192bc
