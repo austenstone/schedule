@@ -66,8 +66,11 @@ export const run = async (): Promise<void> => {
     const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
       console.log(variable);
       const parts = variable.name.split('_');
+      console.log(parts);
       const valParts = variable.value.split(/,(.*)/s);
+      console.log(valParts);
       const workflowInputs = valParts[1] && valParts[1].trim().length > 0 ? JSON.parse(valParts[1]) : undefined;
+      console.log(workflowInputs);
       delete workflowInputs.date;
       return {
         variableName: variable.name,
