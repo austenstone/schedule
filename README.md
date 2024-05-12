@@ -28,7 +28,8 @@ To schedule a workflow, manually do a `workflow_dispatch` by going to "Actions >
 * Replace the `workflow` input with the name, path, or id of the workflow you want to run
 * Change the `timezone` input to your timezone
 
-Make sure you've set your PAT to the `TOKEN` secret in your repository settings.
+> [!IMPORTANT]  
+> Make sure you've set your PAT to the `TOKEN` secret in your repository settings.
 
 ```yml
 name: 📅 Schedule Workflow Dispatch
