@@ -125,7 +125,7 @@ export const run = async (): Promise<void> => {
       }
 
       if (inputs.waitMs > 0) {
-        // promises.push(new Promise((resolve) => setTimeout(() => resolve(null), inputs.waitDelayMs)));
+        promises.push(new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)));
       }
 
       await Promise.all(promises);

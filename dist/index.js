@@ -50326,6 +50326,7 @@ const run = async () => {
                 _schedules.splice(index, 1);
             }
             if (inputs.waitMs > 0) {
+                promises.push(new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs)));
             }
             await Promise.all(promises);
             _schedules = await getSchedules();
