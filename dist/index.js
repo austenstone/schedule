@@ -50218,6 +50218,7 @@ const core_1 = __nccwpck_require__(42186);
 const github_1 = __nccwpck_require__(95438);
 const chrono_node_1 = __nccwpck_require__(30810);
 const date_fns_1 = __nccwpck_require__(73314);
+const crypto_1 = __nccwpck_require__(6113);
 const getInputs = () => {
     const result = {};
     result.owner = (0, core_1.getInput)("owner");
@@ -50267,7 +50268,7 @@ const run = async () => {
         throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
     }
     const workflowId = workflow?.id;
-    const variableName = (date) => [variablePrefix, workflowId, date.valueOf()].join('_');
+    const variableName = (date) => [variablePrefix, workflowId, date.valueOf(), (0, crypto_1.randomUUID)()].join('_');
     const variableValue = (ref, inputs) => `${ref},${inputs ? JSON.stringify(inputs) : ''}`;
     const getSchedules = async () => {
         const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
