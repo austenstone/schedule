@@ -48,4 +48,24 @@ describe('Variable naming', () => {
     expect(workflowId).toBe('146936784');
     expect(date.valueOf()).toBe(1741204800000);
   });
+
+  test('should parse old format variable names without UUID (backward compatibility)', () => {
+    // Old format without UUID
+    const oldVariableName = '_SCHEDULE_146936784_1741204800000';
+    const parts = oldVariableName.split('_');
+    
+    expect(parts[0]).toBe('');
+    expect(parts[1]).toBe('SCHEDULE');
+    expect(parts[2]).toBe('146936784'); // workflow_id
+    expect(parts[3]).toBe('1741204800000'); // timestamp
+    expect(parts[4]).toBeUndefined(); // No UUID in old format
+    
+    // Verify parsing logic still works
+    const workflowId = parts[2];
+    const timestamp = parts[3];
+    const date = new Date(+timestamp);
+    
+    expect(workflowId).toBe('146936784');
+    expect(date.valueOf()).toBe(1741204800000);
+  });
 });
