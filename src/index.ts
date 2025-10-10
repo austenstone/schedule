@@ -2,6 +2,7 @@ import { getInput, group, info, setFailed, summary, warning } from "@actions/cor
 import { context, getOctokit } from "@actions/github";
 import { parseDate } from 'chrono-node'
 import { intervalToDuration } from 'date-fns'
+import { randomUUID } from 'crypto'
 
 interface Input {
   owner: string;
@@ -66,7 +67,7 @@ export const run = async (): Promise<void> => {
     throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
   }
   const workflowId = workflow?.id;
-  const variableName = (date: Date) => [variablePrefix, workflowId, date.valueOf()].join('_');
+  const variableName = (date: Date) => [variablePrefix, workflowId, date.valueOf(), randomUUID()].join('_');
   const variableValue = (ref: string, inputs: object) => `${ref},${inputs ? JSON.stringify(inputs) : ''}`;
   const getSchedules = async () => {
     const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
