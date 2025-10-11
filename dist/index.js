@@ -50388,6 +50388,7 @@ const run = async () => {
 exports.run = run;
 (0, exports.run)().catch((error) => {
     (0, core_1.setFailed)(`Action failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
 });
 
 
