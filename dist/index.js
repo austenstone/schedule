@@ -50271,7 +50271,7 @@ const run = async () => {
         return 'in ' + Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
     };
     const variablePrefix = '_SCHEDULE';
-    const workflows = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows;
+    const workflows = await octokit.paginate(octokit.rest.actions.listRepoWorkflows, { ...ownerRepo, per_page: 100 });
     const workflow = workflows.find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
     if (!workflow) {
         throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
@@ -50280,26 +50280,28 @@ const run = async () => {
     const variableName = (date) => [variablePrefix, workflowId, date.valueOf(), (0, crypto_1.randomUUID)()].join('_');
     const variableValue = (ref, inputs) => `${ref},${inputs ? JSON.stringify(inputs) : ''}`;
     const getSchedules = async () => {
-        const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
-        if (!variables)
-            return [];
-        const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
-            const parts = variable.name.split('_');
-            const [ref, ...inputsParts] = variable.value.split(',');
-            const inputsJson = inputsParts.join(',');
-            const workflowInputs = inputsJson && inputsJson.trim().length > 0 ? JSON.parse(inputsJson) : undefined;
-            const inputsIgnore = inputs.inputsIgnore?.split(',').map((key) => key.trim());
-            inputsIgnore?.forEach((key) => {
-                if (workflowInputs?.[key])
-                    delete workflowInputs[key];
+        const schedules = await octokit.paginate(octokit.rest.actions.listRepoVariables, { ...ownerRepo, per_page: 100 })
+            .then((variables) => {
+            if (!variables)
+                return [];
+            return variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
+                const parts = variable.name.split('_');
+                const [ref, ...inputsParts] = variable.value.split(',');
+                const inputsJson = inputsParts.join(',');
+                const workflowInputs = inputsJson && inputsJson.trim().length > 0 ? JSON.parse(inputsJson) : undefined;
+                const inputsIgnore = inputs.inputsIgnore?.split(',').map((key) => key.trim());
+                inputsIgnore?.forEach((key) => {
+                    if (workflowInputs?.[key])
+                        delete workflowInputs[key];
+                });
+                return {
+                    variableName: variable.name,
+                    workflow_id: parts[2],
+                    date: new Date(+parts[3]),
+                    ref: ref,
+                    inputs: workflowInputs
+                };
             });
-            return {
-                variableName: variable.name,
-                workflow_id: parts[2],
-                date: new Date(+parts[3]),
-                ref: ref,
-                inputs: workflowInputs
-            };
         });
         return schedules;
     };

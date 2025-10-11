@@ -72,7 +72,7 @@ export const run = async (): Promise<void> => {
     return 'in ' + Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
   };
   const variablePrefix = '_SCHEDULE'
-  const workflows = (await octokit.rest.actions.listRepoWorkflows(ownerRepo)).data.workflows;
+  const workflows = await octokit.paginate(octokit.rest.actions.listRepoWorkflows, {...ownerRepo, per_page: 100});
   const workflow = workflows.find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
   if (!workflow) {
     throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
@@ -87,25 +87,27 @@ export const run = async (): Promise<void> => {
     ref: string;
     inputs?: Record<string, unknown>;
   }>> => {
-    const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
-    if (!variables) return [];
-    const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
-      const parts = variable.name.split('_');
-      const [ref, ...inputsParts] = variable.value.split(',');
-      const inputsJson = inputsParts.join(',');
-      const workflowInputs = inputsJson && inputsJson.trim().length > 0 ? JSON.parse(inputsJson) : undefined;
-      const inputsIgnore = inputs.inputsIgnore?.split(',').map((key) => key.trim());
-      inputsIgnore?.forEach((key) => {
-        if (workflowInputs?.[key]) delete workflowInputs[key];
+    const schedules = await octokit.paginate(octokit.rest.actions.listRepoVariables, {...ownerRepo, per_page: 100})
+      .then((variables) => {
+        if (!variables) return [];
+        return variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
+          const parts = variable.name.split('_');
+          const [ref, ...inputsParts] = variable.value.split(',');
+          const inputsJson = inputsParts.join(',');
+          const workflowInputs = inputsJson && inputsJson.trim().length > 0 ? JSON.parse(inputsJson) : undefined;
+          const inputsIgnore = inputs.inputsIgnore?.split(',').map((key) => key.trim());
+          inputsIgnore?.forEach((key) => {
+            if (workflowInputs?.[key]) delete workflowInputs[key];
+          });
+          return {
+            variableName: variable.name,
+            workflow_id: parts[2],
+            date: new Date(+parts[3]),
+            ref: ref,
+            inputs: workflowInputs
+          }
+        });
       });
-      return {
-        variableName: variable.name,
-        workflow_id: parts[2],
-        date: new Date(+parts[3]),
-        ref: ref,
-        inputs: workflowInputs
-      }
-    });
     return schedules;
   };
   const scheduleAdd = async () => {
@@ -153,7 +155,7 @@ export const run = async (): Promise<void> => {
 
           _schedules.splice(index, 1);
         }
-
+        
         if (inputs.waitMs > 0) {
           await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs));
         }
