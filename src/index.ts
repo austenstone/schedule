@@ -14,7 +14,7 @@ interface Input {
   workflow: string;
   ref: string;
   timezone: string;
-  inputs: object;
+  inputs?: Record<string, unknown>;
   inputsIgnore: string;
 }
 
@@ -36,6 +36,17 @@ const getInputs = (): Input => {
   result.inputs = workflowInputs && workflowInputs.trim().length > 0 ? JSON.parse(workflowInputs) : undefined;
   result.inputsIgnore = getInput("inputs-ignore");
 
+  // Validate inputs
+  if (result.waitMs < 0) {
+    throw new Error('wait-ms must be a non-negative number');
+  }
+  if (result.waitDelayMs < 0) {
+    throw new Error('wait-delay-ms must be a non-negative number');
+  }
+  if (!result.workflow) {
+    throw new Error('workflow input is required');
+  }
+
   return result;
 }
 
@@ -55,9 +66,9 @@ export const run = async (): Promise<void> => {
     timeStyle: 'medium',
     timeZone: inputs.timezone || 'UTC',
   });
-  const durationString = (start: Date, end: Date) => {
+  const durationString = (start: Date, end: Date): string => {
     const duration = intervalToDuration({ start, end })
-    if (Object.values(duration).every((value) => value <= 0)) return 'NOW!';
+    if (Object.values(duration).every((value) => typeof value === 'number' && value <= 0)) return 'NOW!';
     return 'in ' + Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
   };
   const variablePrefix = '_SCHEDULE'
@@ -67,15 +78,22 @@ export const run = async (): Promise<void> => {
     throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
   }
   const workflowId = workflow?.id;
-  const variableName = (date: Date) => [variablePrefix, workflowId, date.valueOf(), randomUUID()].join('_');
-  const variableValue = (ref: string, inputs: object) => `${ref},${inputs ? JSON.stringify(inputs) : ''}`;
-  const getSchedules = async () => {
+  const variableName = (date: Date): string => [variablePrefix, workflowId, date.valueOf(), randomUUID()].join('_');
+  const variableValue = (ref: string, inputs?: Record<string, unknown>): string => `${ref},${inputs ? JSON.stringify(inputs) : ''}`;
+  const getSchedules = async (): Promise<Array<{
+    variableName: string;
+    workflow_id: string;
+    date: Date;
+    ref: string;
+    inputs?: Record<string, unknown>;
+  }>> => {
     const { data: { variables } } = await octokit.rest.actions.listRepoVariables(ownerRepo);
     if (!variables) return [];
     const schedules = variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
       const parts = variable.name.split('_');
-      const valParts = variable.value.split(/,(.*)/s);
-      const workflowInputs = valParts[1] && valParts[1].trim().length > 0 ? JSON.parse(valParts[1]) : undefined;
+      const [ref, ...inputsParts] = variable.value.split(',');
+      const inputsJson = inputsParts.join(',');
+      const workflowInputs = inputsJson && inputsJson.trim().length > 0 ? JSON.parse(inputsJson) : undefined;
       const inputsIgnore = inputs.inputsIgnore?.split(',').map((key) => key.trim());
       inputsIgnore?.forEach((key) => {
         if (workflowInputs?.[key]) delete workflowInputs[key];
@@ -84,7 +102,7 @@ export const run = async (): Promise<void> => {
         variableName: variable.name,
         workflow_id: parts[2],
         date: new Date(+parts[3]),
-        ref: valParts[0],
+        ref: ref,
         inputs: workflowInputs
       }
     });
@@ -123,12 +141,15 @@ export const run = async (): Promise<void> => {
             workflow_id: schedule.workflow_id,
             ref: schedule.ref,
             inputs: schedule.inputs
+          }).then(async () => {
+            // Only delete the variable if the workflow dispatch succeeded
+            await octokit.rest.actions.deleteRepoVariable({
+              ...ownerRepo,
+              name: schedule.variableName,
+            });
           }).catch((err) => {
             warning(`Failed to run ${_workflow?.path || schedule.workflow_id}@${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}:\nError: ${err instanceof Error ? err.message : err}`);
-          }).then(() => octokit.rest.actions.deleteRepoVariable({
-            ...ownerRepo,
-            name: schedule.variableName,
-          }))
+          });
 
           _schedules.splice(index, 1);
         }
@@ -173,4 +194,7 @@ export const run = async (): Promise<void> => {
   await summaryWrite();
 };
 
-run();
+run().catch((error) => {
+  setFailed(`Action failed: ${error instanceof Error ? error.message : String(error)}`);
+  throw error;
+});

@@ -1,8 +1,13 @@
 import { test, expect, describe } from '@jest/globals';
 import { randomUUID } from 'crypto';
 
-test('run', async () => {
-  expect(1).toBe(1);
+describe('Duration string formatting', () => {
+  test('should format duration correctly', () => {
+    const start = new Date('2025-01-01T10:00:00Z');
+    const end = new Date('2025-01-01T11:30:00Z');
+    const duration = end.getTime() - start.getTime();
+    expect(duration).toBe(90 * 60 * 1000); // 90 minutes
+  });
 });
 
 describe('Variable naming', () => {

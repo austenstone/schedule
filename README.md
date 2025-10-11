@@ -98,7 +98,7 @@ jobs:
 
 #### Timezone
 
-The timezone is set to `EST` by default. You can change this to your timezone. EX: `US/Central`, `US/Pacific`, [etc](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
+The timezone is set to `US/Eastern` by default. You can change this to your timezone. EX: `US/Central`, `US/Pacific`, [etc](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
 
 ```yml
           timezone: 'US/Eastern'
@@ -180,7 +180,7 @@ Various inputs are defined in [`action.yml`](action.yml):
 | ref | Branch to run the workflow on | ${{ github.ref }} |
 | owner | Optional repository owner to run the workflow on. | ${{ github.repository_owner }} |
 | repo | Optional repository name to run the workflow on. | ${{ github.repository }} |
-| timezone | Timezone to use for the schedule | EST |
+| timezone | Timezone to use for the schedule | US/Eastern |
 | inputs | Inputs to pass to the workflow |
 | inputs-ignore | Inputs to ignore when passing to the workflow | date,workflow |
 
