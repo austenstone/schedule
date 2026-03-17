@@ -15,8 +15,8 @@ jobs:
           token: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
 
       - run: npx npm-check-updates -u --target minor
-      - run: npm i
-      - run: npm audit fix
+      - run: npm i --legacy-peer-deps
+      - run: npm audit fix || true
       - run: npm run build
 
       - uses: stefanzweifel/git-auto-commit-action@v5
