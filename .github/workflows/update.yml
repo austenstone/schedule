@@ -14,7 +14,7 @@ jobs:
         with:
           token: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
 
-      - run: npx npm-check-updates -u
+      - run: npx npm-check-updates -u --target minor
       - run: npm i
       - run: npm audit fix
       - run: npm run build
