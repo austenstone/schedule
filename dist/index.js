@@ -53239,10 +53239,13 @@ function mergeDateTimeComponent(dateComponent, timeComponent) {
     if (timeComponent.isCertain("timezoneOffset")) {
         dateTimeComponent.assign("timezoneOffset", timeComponent.get("timezoneOffset"));
     }
+    const dateHasMeaningfulMeridiem = dateComponent.get("meridiem") != null &&
+        (dateComponent.isCertain("meridiem") ||
+            Array.from(dateComponent.tags()).some((t) => t.startsWith("casualReference/")));
     if (timeComponent.isCertain("meridiem")) {
         dateTimeComponent.assign("meridiem", timeComponent.get("meridiem"));
     }
-    else if (timeComponent.get("meridiem") != null && dateTimeComponent.get("meridiem") == null) {
+    else if (timeComponent.get("meridiem") != null && !dateHasMeaningfulMeridiem) {
         dateTimeComponent.imply("meridiem", timeComponent.get("meridiem"));
     }
     if (dateTimeComponent.get("meridiem") == types_1.Meridiem.PM && dateTimeComponent.get("hour") < 12) {
@@ -54474,6 +54477,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const dates = __importStar(__nccwpck_require__(8552));
 const dates_1 = __nccwpck_require__(8552);
 const duration_1 = __nccwpck_require__(35945);
+const weekdays_1 = __nccwpck_require__(88374);
 class ForwardDateRefiner {
     refine(context, results) {
         if (!context.option.forwardDate) {
@@ -54498,22 +54502,16 @@ class ForwardDateRefiner {
                 }
             }
             if (result.start.isOnlyWeekdayComponent() && refDate > result.start.date()) {
-                let daysToAdd = result.start.get("weekday") - refDate.getDay();
-                if (daysToAdd <= 0) {
-                    daysToAdd += 7;
-                }
-                refDate = (0, duration_1.addDuration)(refDate, { day: daysToAdd });
-                (0, dates_1.implySimilarDate)(result.start, refDate);
+                let daysToAdd = (0, weekdays_1.getDaysForwardToWeekday)(refDate, result.start.get("weekday")) || 7;
+                const forwardedWeekday = (0, duration_1.addDuration)(refDate, { day: daysToAdd });
+                (0, dates_1.implySimilarDate)(result.start, forwardedWeekday);
                 context.debug(() => {
                     console.log(`${this.constructor.name} adjusted ${result} weekday (${result.start})`);
                 });
-                if (result.end && result.end.isOnlyWeekdayComponent()) {
-                    let daysToAdd = result.end.get("weekday") - refDate.getDay();
-                    if (daysToAdd <= 0) {
-                        daysToAdd += 7;
-                    }
-                    refDate = (0, duration_1.addDuration)(refDate, { day: daysToAdd });
-                    (0, dates_1.implySimilarDate)(result.end, refDate);
+                if (result.end && result.start.date() > result.end.date()) {
+                    let daysToAdd = (0, weekdays_1.getDaysForwardToWeekday)(refDate, result.start.get("weekday")) || 7;
+                    const forwardedWeekday = (0, duration_1.addDuration)(refDate, { day: daysToAdd });
+                    (0, dates_1.implySimilarDate)(result.end, forwardedWeekday);
                     context.debug(() => {
                         console.log(`${this.constructor.name} adjusted ${result} weekday (${result.end})`);
                     });
@@ -54740,7 +54738,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.casual = exports.strict = exports.sv = exports.it = exports.uk = exports.es = exports.ru = exports.zh = exports.nl = exports.pt = exports.ja = exports.fr = exports.de = exports.Weekday = exports.Meridiem = exports.ReferenceWithTimezone = exports.ParsingComponents = exports.ParsingResult = exports.ParsingContext = exports.Chrono = exports.en = void 0;
+exports.casual = exports.strict = exports.vi = exports.fi = exports.sv = exports.it = exports.uk = exports.es = exports.ru = exports.zh = exports.nl = exports.pt = exports.ja = exports.fr = exports.de = exports.Weekday = exports.Meridiem = exports.ReferenceWithTimezone = exports.ParsingComponents = exports.ParsingResult = exports.ParsingContext = exports.Chrono = exports.en = void 0;
 exports.parse = parse;
 exports.parseDate = parseDate;
 const en = __importStar(__nccwpck_require__(16155));
@@ -54777,6 +54775,10 @@ const it = __importStar(__nccwpck_require__(36217));
 exports.it = it;
 const sv = __importStar(__nccwpck_require__(41049));
 exports.sv = sv;
+const fi = __importStar(__nccwpck_require__(9973));
+exports.fi = fi;
+const vi = __importStar(__nccwpck_require__(70629));
+exports.vi = vi;
 exports.strict = en.strict;
 exports.casual = en.casual;
 function parse(text, ref, option) {
@@ -55453,7 +55455,7 @@ class DETimeUnitAgoFormatParser extends AbstractParserWithWordBoundary_1.Abstrac
         return new RegExp(`(?:\\s*((?:nächste|kommende|folgende|letzte|vergangene|vorige|vor(?:her|an)gegangene)(?:s|n|m|r)?|vor|in)\\s*)?` +
             `(${constants_1.NUMBER_PATTERN})?` +
             `(?:\\s*(nächste|kommende|folgende|letzte|vergangene|vorige|vor(?:her|an)gegangene)(?:s|n|m|r)?)?` +
-            `\\s*(${(0, pattern_1.matchAnyPattern)(constants_1.TIME_UNIT_DICTIONARY)})`, "i");
+            `\\s*(${(0, pattern_1.matchAnyPattern)(constants_1.TIME_UNIT_DICTIONARY)})(?=\\W|$)`, "i");
     }
     innerExtract(context, match) {
         const num = match[2] ? (0, constants_1.parseNumberPattern)(match[2]) : 1;
@@ -55825,7 +55827,7 @@ function parseOrdinalNumberPattern(match) {
     num = num.replace(/(?:st|nd|rd|th)$/i, "");
     return parseInt(num);
 }
-exports.YEAR_PATTERN = `(?:[1-9][0-9]{0,3}\\s{0,2}(?:BE|AD|BC|BCE|CE)|[1-2][0-9]{3}|[5-9][0-9]|2[0-5])`;
+exports.YEAR_PATTERN = `(?:[1-9][0-9]{0,3}\\s{0,2}(?:BE|AD|BC|BCE|CE)|[1-9][0-9]{3}|[5-9][0-9]|2[0-5])`;
 function parseYear(match) {
     if (/BE/i.test(match)) {
         match = match.replace(/BE/i, "");
@@ -56588,7 +56590,7 @@ const PATTERN = new RegExp("(?:(?:\\,|\\(|\\（)\\s*)?" +
     "(?:(this|last|past|next)\\s*)?" +
     `(${(0, pattern_1.matchAnyPattern)(constants_1.WEEKDAY_DICTIONARY)}|weekend|weekday)` +
     "(?:\\s*(?:\\,|\\)|\\）))?" +
-    "(?:\\s*(this|last|past|next)\\s*week)?" +
+    "(?:\\s*(?:of\\s*)?(this|last|past|next)\\s*week)?" +
     "(?=\\W|$)", "i");
 const PREFIX_GROUP = 1;
 const WEEKDAY_GROUP = 2;
@@ -57221,14 +57223,17 @@ class ESCasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
             case "tarde":
                 component.imply("meridiem", types_1.Meridiem.PM);
                 component.imply("hour", 15);
+                component.addTag("casualReference/afternoon");
                 break;
             case "noche":
                 component.imply("meridiem", types_1.Meridiem.PM);
                 component.imply("hour", 22);
+                component.addTag("casualReference/evening");
                 break;
             case "mañana":
                 component.imply("meridiem", types_1.Meridiem.AM);
                 component.imply("hour", 6);
+                component.addTag("casualReference/morning");
                 break;
             case "medianoche":
                 const nextDay = new Date(targetDate.getTime());
@@ -57238,11 +57243,13 @@ class ESCasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("hour", 0);
                 component.imply("minute", 0);
                 component.imply("second", 0);
+                component.addTag("casualReference/midnight");
                 break;
             case "mediodia":
             case "mediodía":
                 component.imply("meridiem", types_1.Meridiem.AM);
                 component.imply("hour", 12);
+                component.addTag("casualReference/noon");
                 break;
         }
         return component;
@@ -57440,6 +57447,726 @@ class ESMergeDateTimeRefiner extends AbstractMergeDateTimeRefiner_1.default {
 }
 exports["default"] = ESMergeDateTimeRefiner;
 //# sourceMappingURL=ESMergeDateTimeRefiner.js.map
+
+/***/ }),
+
+/***/ 28044:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TIME_UNITS_NO_ABBR_PATTERN = exports.TIME_UNITS_PATTERN = exports.TIME_UNIT_PATTERN = exports.NUMBER_PATTERN = exports.TIME_UNIT_NO_ABBR_DICTIONARY = exports.TIME_UNIT_DICTIONARY = exports.INTEGER_WORD_DICTIONARY = exports.MONTH_DICTIONARY = exports.WEEKDAY_DICTIONARY = void 0;
+exports.parseDuration = parseDuration;
+exports.parseNumberPattern = parseNumberPattern;
+exports.parseYear = parseYear;
+const pattern_1 = __nccwpck_require__(77907);
+const years_1 = __nccwpck_require__(53683);
+exports.WEEKDAY_DICTIONARY = {
+    "sunnuntai": 0,
+    "sunnuntaina": 0,
+    "su": 0,
+    "maanantai": 1,
+    "maanantaina": 1,
+    "ma": 1,
+    "tiistai": 2,
+    "tiistaina": 2,
+    "ti": 2,
+    "keskiviikko": 3,
+    "keskiviikkona": 3,
+    "ke": 3,
+    "torstai": 4,
+    "torstaina": 4,
+    "to": 4,
+    "perjantai": 5,
+    "perjantaina": 5,
+    "pe": 5,
+    "lauantai": 6,
+    "lauantaina": 6,
+    "la": 6,
+};
+exports.MONTH_DICTIONARY = {
+    "tammikuu": 1,
+    "tammikuuta": 1,
+    "tammikuun": 1,
+    "tammi": 1,
+    "helmikuu": 2,
+    "helmikuuta": 2,
+    "helmikuun": 2,
+    "helmi": 2,
+    "maaliskuu": 3,
+    "maaliskuuta": 3,
+    "maaliskuun": 3,
+    "maalis": 3,
+    "huhtikuu": 4,
+    "huhtikuuta": 4,
+    "huhtikuun": 4,
+    "huhti": 4,
+    "toukokuu": 5,
+    "toukokuuta": 5,
+    "toukokuun": 5,
+    "touko": 5,
+    "kesäkuu": 6,
+    "kesäkuuta": 6,
+    "kesäkuun": 6,
+    "kesä": 6,
+    "heinäkuu": 7,
+    "heinäkuuta": 7,
+    "heinäkuun": 7,
+    "heinä": 7,
+    "elokuu": 8,
+    "elokuuta": 8,
+    "elokuun": 8,
+    "elo": 8,
+    "syyskuu": 9,
+    "syyskuuta": 9,
+    "syyskuun": 9,
+    "syys": 9,
+    "lokakuu": 10,
+    "lokakuuta": 10,
+    "lokakuun": 10,
+    "loka": 10,
+    "marraskuu": 11,
+    "marraskuuta": 11,
+    "marraskuun": 11,
+    "marras": 11,
+    "joulukuu": 12,
+    "joulukuuta": 12,
+    "joulukuun": 12,
+    "joulu": 12,
+};
+exports.INTEGER_WORD_DICTIONARY = {
+    "yksi": 1,
+    "yhden": 1,
+    "kaksi": 2,
+    "kahden": 2,
+    "kolme": 3,
+    "kolmen": 3,
+    "neljä": 4,
+    "neljän": 4,
+    "viisi": 5,
+    "viiden": 5,
+    "kuusi": 6,
+    "kuuden": 6,
+    "seitsemän": 7,
+    "kahdeksan": 8,
+    "yhdeksän": 9,
+    "kymmenen": 10,
+};
+exports.TIME_UNIT_DICTIONARY = {
+    "s": "second",
+    "sek": "second",
+    "sekunti": "second",
+    "sekuntia": "second",
+    "sekunnin": "second",
+    "min": "minute",
+    "minuutti": "minute",
+    "minuuttia": "minute",
+    "minuutin": "minute",
+    "t": "hour",
+    "tunti": "hour",
+    "tuntia": "hour",
+    "tunnin": "hour",
+    "pv": "day",
+    "päivä": "day",
+    "päivää": "day",
+    "päivän": "day",
+    "vk": "week",
+    "viikko": "week",
+    "viikkoa": "week",
+    "viikon": "week",
+    "kk": "month",
+    "kuukausi": "month",
+    "kuukautta": "month",
+    "kuukauden": "month",
+    "vuosi": "year",
+    "vuotta": "year",
+    "vuoden": "year",
+};
+exports.TIME_UNIT_NO_ABBR_DICTIONARY = {
+    "sekunti": "second",
+    "sekuntia": "second",
+    "sekunnin": "second",
+    "minuutti": "minute",
+    "minuuttia": "minute",
+    "minuutin": "minute",
+    "tunti": "hour",
+    "tuntia": "hour",
+    "tunnin": "hour",
+    "päivä": "day",
+    "päivää": "day",
+    "päivän": "day",
+    "viikko": "week",
+    "viikkoa": "week",
+    "viikon": "week",
+    "kuukausi": "month",
+    "kuukautta": "month",
+    "kuukauden": "month",
+    "vuosi": "year",
+    "vuotta": "year",
+    "vuoden": "year",
+};
+function parseDuration(timeunitText) {
+    const fragments = {};
+    let remainingText = timeunitText;
+    let match = SINGLE_TIME_UNIT_REGEX.exec(remainingText);
+    while (match) {
+        collectDateTimeFragment(fragments, match);
+        remainingText = remainingText.substring(match[0].length);
+        match = SINGLE_TIME_UNIT_REGEX.exec(remainingText);
+    }
+    return fragments;
+}
+function collectDateTimeFragment(fragments, match) {
+    const num = parseNumberPattern(match[1]);
+    const unit = exports.TIME_UNIT_DICTIONARY[match[2].toLowerCase()];
+    fragments[unit] = num;
+}
+exports.NUMBER_PATTERN = `(?:${(0, pattern_1.matchAnyPattern)(exports.INTEGER_WORD_DICTIONARY)}|\\d+)`;
+exports.TIME_UNIT_PATTERN = `(?:${(0, pattern_1.matchAnyPattern)(exports.TIME_UNIT_DICTIONARY)})`;
+const SINGLE_TIME_UNIT_PATTERN = `(${exports.NUMBER_PATTERN})\\s{0,5}(${(0, pattern_1.matchAnyPattern)(exports.TIME_UNIT_DICTIONARY)})\\s{0,5}`;
+const SINGLE_TIME_UNIT_REGEX = new RegExp(SINGLE_TIME_UNIT_PATTERN, "i");
+const SINGLE_TIME_UNIT_NO_ABBR_PATTERN = `(${exports.NUMBER_PATTERN})\\s{0,5}(${(0, pattern_1.matchAnyPattern)(exports.TIME_UNIT_NO_ABBR_DICTIONARY)})\\s{0,5}`;
+exports.TIME_UNITS_PATTERN = (0, pattern_1.repeatedTimeunitPattern)("", SINGLE_TIME_UNIT_PATTERN);
+exports.TIME_UNITS_NO_ABBR_PATTERN = (0, pattern_1.repeatedTimeunitPattern)("", SINGLE_TIME_UNIT_NO_ABBR_PATTERN);
+function parseNumberPattern(match) {
+    const num = match.toLowerCase();
+    if (exports.INTEGER_WORD_DICTIONARY[num] !== undefined) {
+        return exports.INTEGER_WORD_DICTIONARY[num];
+    }
+    return parseInt(num);
+}
+function parseYear(match) {
+    if (/\d+/.test(match)) {
+        let yearNumber = parseInt(match);
+        if (yearNumber < 100) {
+            yearNumber = (0, years_1.findMostLikelyADYear)(yearNumber);
+        }
+        return yearNumber;
+    }
+    const num = match.toLowerCase();
+    if (exports.INTEGER_WORD_DICTIONARY[num] !== undefined) {
+        return exports.INTEGER_WORD_DICTIONARY[num];
+    }
+    return parseInt(match);
+}
+//# sourceMappingURL=constants.js.map
+
+/***/ }),
+
+/***/ 9973:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.strict = exports.casual = exports.Weekday = exports.Meridiem = exports.ReferenceWithTimezone = exports.ParsingComponents = exports.ParsingResult = exports.Chrono = void 0;
+exports.parse = parse;
+exports.parseDate = parseDate;
+exports.createCasualConfiguration = createCasualConfiguration;
+exports.createConfiguration = createConfiguration;
+const configurations_1 = __nccwpck_require__(77352);
+const chrono_1 = __nccwpck_require__(55856);
+Object.defineProperty(exports, "Chrono", ({ enumerable: true, get: function () { return chrono_1.Chrono; } }));
+const results_1 = __nccwpck_require__(86033);
+Object.defineProperty(exports, "ParsingResult", ({ enumerable: true, get: function () { return results_1.ParsingResult; } }));
+Object.defineProperty(exports, "ParsingComponents", ({ enumerable: true, get: function () { return results_1.ParsingComponents; } }));
+Object.defineProperty(exports, "ReferenceWithTimezone", ({ enumerable: true, get: function () { return results_1.ReferenceWithTimezone; } }));
+const types_1 = __nccwpck_require__(12754);
+Object.defineProperty(exports, "Meridiem", ({ enumerable: true, get: function () { return types_1.Meridiem; } }));
+Object.defineProperty(exports, "Weekday", ({ enumerable: true, get: function () { return types_1.Weekday; } }));
+const SlashDateFormatParser_1 = __importDefault(__nccwpck_require__(99415));
+const ISOFormatParser_1 = __importDefault(__nccwpck_require__(8943));
+const FITimeExpressionParser_1 = __importDefault(__nccwpck_require__(9941));
+const FIWeekdayParser_1 = __importDefault(__nccwpck_require__(94696));
+const FIMonthNameLittleEndianParser_1 = __importDefault(__nccwpck_require__(41108));
+const FITimeUnitCasualRelativeFormatParser_1 = __importDefault(__nccwpck_require__(19467));
+const FITimeUnitAgoFormatParser_1 = __importDefault(__nccwpck_require__(13189));
+const FITimeUnitWithinFormatParser_1 = __importDefault(__nccwpck_require__(41045));
+const FICasualDateParser_1 = __importDefault(__nccwpck_require__(36575));
+const FICasualTimeParser_1 = __importDefault(__nccwpck_require__(1766));
+const FIMergeDateRangeRefiner_1 = __importDefault(__nccwpck_require__(40281));
+const FIMergeDateTimeRefiner_1 = __importDefault(__nccwpck_require__(52965));
+exports.casual = new chrono_1.Chrono(createCasualConfiguration());
+exports.strict = new chrono_1.Chrono(createConfiguration(true));
+function parse(text, ref, option) {
+    return exports.casual.parse(text, ref, option);
+}
+function parseDate(text, ref, option) {
+    return exports.casual.parseDate(text, ref, option);
+}
+function createCasualConfiguration(littleEndian = true) {
+    const option = createConfiguration(false, littleEndian);
+    option.parsers.unshift(new FICasualTimeParser_1.default());
+    option.parsers.unshift(new FICasualDateParser_1.default());
+    option.parsers.unshift(new FITimeUnitCasualRelativeFormatParser_1.default());
+    return option;
+}
+function createConfiguration(strictMode = true, littleEndian = true) {
+    return (0, configurations_1.includeCommonConfiguration)({
+        parsers: [
+            new ISOFormatParser_1.default(),
+            new SlashDateFormatParser_1.default(littleEndian),
+            new FITimeExpressionParser_1.default(),
+            new FIMonthNameLittleEndianParser_1.default(),
+            new FIWeekdayParser_1.default(),
+            new FITimeUnitWithinFormatParser_1.default(),
+            new FITimeUnitAgoFormatParser_1.default(),
+        ],
+        refiners: [new FIMergeDateRangeRefiner_1.default(), new FIMergeDateTimeRefiner_1.default()],
+    }, strictMode);
+}
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 36575:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const dates_1 = __nccwpck_require__(8552);
+const FICasualTimeParser_1 = __importDefault(__nccwpck_require__(1766));
+const references = __importStar(__nccwpck_require__(95858));
+const duration_1 = __nccwpck_require__(35945);
+const PATTERN = new RegExp(`(nyt|tänään|huomenna|ylihuomenna|eilen|toissapäivänä|viime\\s*yönä)` +
+    `(?:\\s*(aamulla|aamuna|aamupäivällä|päivällä|iltapäivällä|illalla|yöllä|keskiyöllä))?` +
+    `(?=\\W|$)`, "i");
+const DATE_GROUP = 1;
+const TIME_GROUP = 2;
+class FICasualDateParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern(context) {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        let targetDate = context.reference.getDateWithAdjustedTimezone();
+        const dateKeyword = (match[DATE_GROUP] || "").toLowerCase();
+        const timeKeyword = (match[TIME_GROUP] || "").toLowerCase();
+        let component = context.createParsingComponents();
+        switch (dateKeyword) {
+            case "nyt":
+                component = references.now(context.reference);
+                break;
+            case "tänään":
+                component = references.today(context.reference);
+                break;
+            case "huomenna":
+                targetDate = (0, duration_1.addDuration)(targetDate, { day: 1 });
+                (0, dates_1.assignSimilarDate)(component, targetDate);
+                (0, dates_1.implySimilarTime)(component, targetDate);
+                break;
+            case "ylihuomenna":
+                targetDate = (0, duration_1.addDuration)(targetDate, { day: 2 });
+                (0, dates_1.assignSimilarDate)(component, targetDate);
+                (0, dates_1.implySimilarTime)(component, targetDate);
+                break;
+            case "eilen":
+                targetDate = (0, duration_1.addDuration)(targetDate, { day: -1 });
+                (0, dates_1.assignSimilarDate)(component, targetDate);
+                (0, dates_1.implySimilarTime)(component, targetDate);
+                break;
+            case "toissapäivänä":
+                targetDate = (0, duration_1.addDuration)(targetDate, { day: -2 });
+                (0, dates_1.assignSimilarDate)(component, targetDate);
+                (0, dates_1.implySimilarTime)(component, targetDate);
+                break;
+            default:
+                if (dateKeyword.match(/viime\s*yönä/)) {
+                    if (targetDate.getHours() > 6) {
+                        targetDate = (0, duration_1.addDuration)(targetDate, { day: -1 });
+                    }
+                    (0, dates_1.assignSimilarDate)(component, targetDate);
+                    component.imply("hour", 0);
+                }
+                break;
+        }
+        if (timeKeyword) {
+            component = FICasualTimeParser_1.default.extractTimeComponents(component, timeKeyword);
+        }
+        return component;
+    }
+}
+exports["default"] = FICasualDateParser;
+//# sourceMappingURL=FICasualDateParser.js.map
+
+/***/ }),
+
+/***/ 1766:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const types_1 = __nccwpck_require__(12754);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const dates_1 = __nccwpck_require__(8552);
+class FICasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern(context) {
+        return /(tänä\s*)?(aamulla|aamuna|aamupäivällä|päivällä|iltapäivällä|illalla|yöllä|keskiyöllä)(?=\W|$)/i;
+    }
+    innerExtract(context, match) {
+        const targetDate = context.refDate;
+        const timeKeywordPattern = match[2].toLowerCase();
+        const component = context.createParsingComponents();
+        (0, dates_1.implySimilarTime)(component, targetDate);
+        return FICasualTimeParser.extractTimeComponents(component, timeKeywordPattern);
+    }
+    static extractTimeComponents(component, timeKeywordPattern) {
+        switch (timeKeywordPattern) {
+            case "aamulla":
+            case "aamuna":
+                component.imply("hour", 6);
+                component.imply("minute", 0);
+                component.imply("second", 0);
+                component.imply("meridiem", types_1.Meridiem.AM);
+                break;
+            case "aamupäivällä":
+                component.imply("hour", 9);
+                component.imply("minute", 0);
+                component.imply("second", 0);
+                component.imply("meridiem", types_1.Meridiem.AM);
+                break;
+            case "päivällä":
+                component.imply("hour", 12);
+                component.imply("minute", 0);
+                component.imply("second", 0);
+                component.imply("meridiem", types_1.Meridiem.AM);
+                break;
+            case "iltapäivällä":
+                component.imply("hour", 15);
+                component.imply("minute", 0);
+                component.imply("second", 0);
+                component.imply("meridiem", types_1.Meridiem.PM);
+                break;
+            case "illalla":
+                component.imply("hour", 18);
+                component.imply("minute", 0);
+                component.imply("second", 0);
+                component.imply("meridiem", types_1.Meridiem.PM);
+                break;
+            case "yöllä":
+                component.imply("hour", 22);
+                component.imply("minute", 0);
+                component.imply("second", 0);
+                component.imply("meridiem", types_1.Meridiem.PM);
+                break;
+            case "keskiyöllä":
+                if (component.get("hour") > 1) {
+                    component.addDurationAsImplied({ "day": 1 });
+                }
+                component.imply("hour", 0);
+                component.imply("minute", 0);
+                component.imply("second", 0);
+                component.imply("meridiem", types_1.Meridiem.AM);
+                break;
+        }
+        return component;
+    }
+}
+exports["default"] = FICasualTimeParser;
+//# sourceMappingURL=FICasualTimeParser.js.map
+
+/***/ }),
+
+/***/ 41108:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const years_1 = __nccwpck_require__(53683);
+const constants_1 = __nccwpck_require__(28044);
+const constants_2 = __nccwpck_require__(28044);
+const pattern_1 = __nccwpck_require__(77907);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const PATTERN = new RegExp(`([0-9]{1,2})\\.?` +
+    `(?:\\s*(?:\\-|\\–|\\s)\\s*([0-9]{1,2})\\.?)?\\s*` +
+    `(${(0, pattern_1.matchAnyPattern)(constants_1.MONTH_DICTIONARY)})` +
+    `(?:(?:-|/|,?\\s*)([0-9]{4}(?![^\\s]\\d)))?` +
+    `(?=\\W|$)`, "i");
+const DATE_GROUP = 1;
+const DATE_TO_GROUP = 2;
+const MONTH_NAME_GROUP = 3;
+const YEAR_GROUP = 4;
+class FIMonthNameLittleEndianParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const result = context.createParsingResult(match.index, match[0]);
+        const month = constants_1.MONTH_DICTIONARY[match[MONTH_NAME_GROUP].toLowerCase()];
+        const day = parseInt(match[DATE_GROUP]);
+        if (day > 31) {
+            match.index = match.index + match[DATE_GROUP].length;
+            return null;
+        }
+        result.start.assign("month", month);
+        result.start.assign("day", day);
+        if (match[YEAR_GROUP]) {
+            const yearNumber = (0, constants_2.parseYear)(match[YEAR_GROUP]);
+            result.start.assign("year", yearNumber);
+        }
+        else {
+            const year = (0, years_1.findYearClosestToRef)(context.refDate, day, month);
+            result.start.imply("year", year);
+        }
+        if (match[DATE_TO_GROUP]) {
+            const endDate = parseInt(match[DATE_TO_GROUP]);
+            result.end = result.start.clone();
+            result.end.assign("day", endDate);
+        }
+        return result;
+    }
+}
+exports["default"] = FIMonthNameLittleEndianParser;
+//# sourceMappingURL=FIMonthNameLittleEndianParser.js.map
+
+/***/ }),
+
+/***/ 9941:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractTimeExpressionParser_1 = __nccwpck_require__(53562);
+class FITimeExpressionParser extends AbstractTimeExpressionParser_1.AbstractTimeExpressionParser {
+    primaryPrefix() {
+        return "(?:(?:klo|kello)\\s*)?";
+    }
+    followingPhase() {
+        return "\\s*(?:\\-|\\–|\\~|\\〜)\\s*";
+    }
+    extractPrimaryTimeComponents(context, match) {
+        if (match[0].match(/^\s*\d{4}\s*$/)) {
+            return null;
+        }
+        return super.extractPrimaryTimeComponents(context, match);
+    }
+}
+exports["default"] = FITimeExpressionParser;
+//# sourceMappingURL=FITimeExpressionParser.js.map
+
+/***/ }),
+
+/***/ 13189:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(28044);
+const results_1 = __nccwpck_require__(86033);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const duration_1 = __nccwpck_require__(35945);
+class FITimeUnitAgoFormatParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return new RegExp(`(${constants_1.TIME_UNITS_PATTERN})\\s*sitten(?=\\W|$)`, "i");
+    }
+    innerExtract(context, match) {
+        const timeUnits = (0, constants_1.parseDuration)(match[1]);
+        const outputTimeUnits = (0, duration_1.reverseDuration)(timeUnits);
+        return results_1.ParsingComponents.createRelativeFromReference(context.reference, outputTimeUnits);
+    }
+}
+exports["default"] = FITimeUnitAgoFormatParser;
+//# sourceMappingURL=FITimeUnitAgoFormatParser.js.map
+
+/***/ }),
+
+/***/ 19467:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(28044);
+const results_1 = __nccwpck_require__(86033);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const duration_1 = __nccwpck_require__(35945);
+const PATTERN = new RegExp(`(seuraava|seuraavat|seuraavien|edellinen|edelliset|edellisten|viimeiset|viimeisten|kuluneet|kuluneiden|\\+|-)\\s*(${constants_1.TIME_UNITS_PATTERN})(?=\\W|$)`, "i");
+const PATTERN_NO_ABBR = new RegExp(`(seuraava|seuraavat|seuraavien|edellinen|edelliset|edellisten|viimeiset|viimeisten|kuluneet|kuluneiden|\\+|-)\\s*(${constants_1.TIME_UNITS_NO_ABBR_PATTERN})(?=\\W|$)`, "i");
+class FITimeUnitCasualRelativeFormatParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    constructor(allowAbbreviations = true) {
+        super();
+        this.allowAbbreviations = allowAbbreviations;
+    }
+    innerPattern() {
+        return this.allowAbbreviations ? PATTERN : PATTERN_NO_ABBR;
+    }
+    innerExtract(context, match) {
+        const prefix = match[1].toLowerCase();
+        let duration = (0, constants_1.parseDuration)(match[2]);
+        if (!duration) {
+            return null;
+        }
+        switch (prefix) {
+            case "edellinen":
+            case "edelliset":
+            case "edellisten":
+            case "viimeiset":
+            case "viimeisten":
+            case "kuluneet":
+            case "kuluneiden":
+            case "-":
+                duration = (0, duration_1.reverseDuration)(duration);
+                break;
+        }
+        return results_1.ParsingComponents.createRelativeFromReference(context.reference, duration);
+    }
+}
+exports["default"] = FITimeUnitCasualRelativeFormatParser;
+//# sourceMappingURL=FITimeUnitCasualRelativeFormatParser.js.map
+
+/***/ }),
+
+/***/ 41045:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(28044);
+const results_1 = __nccwpck_require__(86033);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+class FITimeUnitWithinFormatParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return new RegExp(`(${constants_1.TIME_UNITS_PATTERN})\\s*(?:sisällä|kuluessa|päästä)(?=\\W|$)`, "i");
+    }
+    innerExtract(context, match) {
+        const timeUnits = (0, constants_1.parseDuration)(match[1]);
+        return results_1.ParsingComponents.createRelativeFromReference(context.reference, timeUnits);
+    }
+}
+exports["default"] = FITimeUnitWithinFormatParser;
+//# sourceMappingURL=FITimeUnitWithinFormatParser.js.map
+
+/***/ }),
+
+/***/ 94696:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(28044);
+const pattern_1 = __nccwpck_require__(77907);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const weekdays_1 = __nccwpck_require__(88374);
+const PATTERN = new RegExp("(?:(?:\\,|\\(|\\（)\\s*)?" +
+    "(?:(viime|edellinen|edellisenä|ensi|seuraava|seuraavana|tämä|tänä)\\s*)?" +
+    `(${(0, pattern_1.matchAnyPattern)(constants_1.WEEKDAY_DICTIONARY)})` +
+    "(?:\\s*(?:\\,|\\)|\\）))?" +
+    "(?:\\s*(viime|ensi|seuraava)\\s*viikolla)?" +
+    "(?=\\W|$)", "i");
+const PREFIX_GROUP = 1;
+const WEEKDAY_GROUP = 2;
+const SUFFIX_GROUP = 3;
+class FIWeekdayParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const dayOfWeek = match[WEEKDAY_GROUP].toLowerCase();
+        const offset = constants_1.WEEKDAY_DICTIONARY[dayOfWeek];
+        const prefix = match[PREFIX_GROUP];
+        const postfix = match[SUFFIX_GROUP];
+        let modifierWord = prefix || postfix;
+        modifierWord = modifierWord || "";
+        modifierWord = modifierWord.toLowerCase();
+        let modifier = null;
+        if (modifierWord.match(/viime|edellinen|edellisenä/)) {
+            modifier = "last";
+        }
+        else if (modifierWord.match(/ensi|seuraava|seuraavana/)) {
+            modifier = "next";
+        }
+        return (0, weekdays_1.createParsingComponentsAtWeekday)(context.reference, offset, modifier);
+    }
+}
+exports["default"] = FIWeekdayParser;
+//# sourceMappingURL=FIWeekdayParser.js.map
+
+/***/ }),
+
+/***/ 40281:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractMergeDateRangeRefiner_1 = __importDefault(__nccwpck_require__(88560));
+class FIMergeDateRangeRefiner extends AbstractMergeDateRangeRefiner_1.default {
+    patternBetween() {
+        return /^\s*(-|–)\s*$/i;
+    }
+}
+exports["default"] = FIMergeDateRangeRefiner;
+//# sourceMappingURL=FIMergeDateRangeRefiner.js.map
+
+/***/ }),
+
+/***/ 52965:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractMergeDateTimeRefiner_1 = __importDefault(__nccwpck_require__(79682));
+class FIMergeDateTimeRefiner extends AbstractMergeDateTimeRefiner_1.default {
+    patternBetween() {
+        return new RegExp("^\\s*(T|klo|kello|,|-)?\\s*$");
+    }
+}
+exports["default"] = FIMergeDateTimeRefiner;
+//# sourceMappingURL=FIMergeDateTimeRefiner.js.map
 
 /***/ }),
 
@@ -58897,7 +59624,7 @@ class ENTimeExpressionParser extends AbstractTimeExpressionParser_1.AbstractTime
         return "(?:(?:alle|dalle)\\s*)??";
     }
     primarySuffix() {
-        return "(?:\\s*(?:o\\W*in punto|alle\\s*sera|in\\s*del\\s*(?:mattina|pomeriggio)))?(?!/)(?=\\W|$)";
+        return "(?:\\s*(?:in punto|o\\W*in punto|(?:di|del|della|in|al|alla|alle)\\s*(?:mattina|pomeriggio|sera)))?(?!/)(?=\\W|$)";
     }
     extractPrimaryTimeComponents(context, match) {
         const components = super.extractPrimaryTimeComponents(context, match);
@@ -60264,11 +60991,13 @@ class NLCasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
             case "'s namiddags":
                 component.imply("meridiem", types_1.Meridiem.PM);
                 component.imply("hour", 15);
+                component.addTag("casualReference/afternoon");
                 break;
             case "avond":
             case "'s avonds'":
                 component.imply("meridiem", types_1.Meridiem.PM);
                 component.imply("hour", 20);
+                component.addTag("casualReference/evening");
                 break;
             case "middernacht":
                 const nextDay = new Date(targetDate.getTime());
@@ -60278,16 +61007,19 @@ class NLCasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("hour", 0);
                 component.imply("minute", 0);
                 component.imply("second", 0);
+                component.addTag("casualReference/midnight");
                 break;
             case "ochtend":
             case "'s ochtends":
                 component.imply("meridiem", types_1.Meridiem.AM);
                 component.imply("hour", 6);
+                component.addTag("casualReference/morning");
                 break;
             case "middag":
             case "'s middags":
                 component.imply("meridiem", types_1.Meridiem.AM);
                 component.imply("hour", 12);
+                component.addTag("casualReference/noon");
                 break;
         }
         return component;
@@ -61017,15 +61749,18 @@ class PTCasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
             case "tarde":
                 component.imply("meridiem", types_1.Meridiem.PM);
                 component.imply("hour", 15);
+                component.addTag("casualReference/afternoon");
                 break;
             case "noite":
                 component.imply("meridiem", types_1.Meridiem.PM);
                 component.imply("hour", 22);
+                component.addTag("casualReference/evening");
                 break;
             case "manha":
             case "manhã":
                 component.imply("meridiem", types_1.Meridiem.AM);
                 component.imply("hour", 6);
+                component.addTag("casualReference/morning");
                 break;
             case "meia-noite":
                 const nextDay = new Date(targetDate.getTime());
@@ -61035,10 +61770,12 @@ class PTCasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("hour", 0);
                 component.imply("minute", 0);
                 component.imply("second", 0);
+                component.addTag("casualReference/midnight");
                 break;
             case "meio-dia":
                 component.imply("meridiem", types_1.Meridiem.AM);
                 component.imply("hour", 12);
+                component.addTag("casualReference/noon");
                 break;
         }
         return component;
@@ -63762,6 +64499,757 @@ exports["default"] = UKMergeDateTimeRefiner;
 
 /***/ }),
 
+/***/ 48028:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TIME_UNITS_PATTERN = exports.YEAR_PATTERN = exports.NUMBER_PATTERN = exports.TIME_UNIT_DICTIONARY = exports.INTEGER_WORD_DICTIONARY = exports.MONTH_DICTIONARY = exports.WEEKDAY_DICTIONARY = void 0;
+exports.parseNumberPattern = parseNumberPattern;
+exports.parseYear = parseYear;
+exports.parseDuration = parseDuration;
+const pattern_1 = __nccwpck_require__(77907);
+const years_1 = __nccwpck_require__(53683);
+exports.WEEKDAY_DICTIONARY = {
+    "ch\u1ee7 nh\u1eadt": 0,
+    "cn": 0,
+    "th\u1ee9 hai": 1,
+    "t2": 1,
+    "th\u1ee9 ba": 2,
+    "t3": 2,
+    "th\u1ee9 t\u01b0": 3,
+    "t4": 3,
+    "th\u1ee9 n\u0103m": 4,
+    "t5": 4,
+    "th\u1ee9 s\u00e1u": 5,
+    "t6": 5,
+    "th\u1ee9 b\u1ea3y": 6,
+    "t7": 6,
+};
+exports.MONTH_DICTIONARY = {
+    "th\u00e1ng 1": 1,
+    "th\u00e1ng m\u1ed9t": 1,
+    "th\u00e1ng gi\u00eang": 1,
+    "th\u00e1ng 2": 2,
+    "th\u00e1ng hai": 2,
+    "th\u00e1ng 3": 3,
+    "th\u00e1ng ba": 3,
+    "th\u00e1ng 4": 4,
+    "th\u00e1ng t\u01b0": 4,
+    "th\u00e1ng 5": 5,
+    "th\u00e1ng n\u0103m": 5,
+    "th\u00e1ng 6": 6,
+    "th\u00e1ng s\u00e1u": 6,
+    "th\u00e1ng 7": 7,
+    "th\u00e1ng b\u1ea3y": 7,
+    "th\u00e1ng 8": 8,
+    "th\u00e1ng t\u00e1m": 8,
+    "th\u00e1ng 9": 9,
+    "th\u00e1ng ch\u00edn": 9,
+    "th\u00e1ng 10": 10,
+    "th\u00e1ng m\u01b0\u1eddi": 10,
+    "th\u00e1ng 11": 11,
+    "th\u00e1ng m\u01b0\u1eddi m\u1ed9t": 11,
+    "th\u00e1ng 12": 12,
+    "th\u00e1ng m\u01b0\u1eddi hai": 12,
+    "th\u00e1ng ch\u1ea1p": 12,
+};
+exports.INTEGER_WORD_DICTIONARY = {
+    "m\u1ed9t": 1,
+    "hai": 2,
+    "ba": 3,
+    "b\u1ed1n": 4,
+    "n\u0103m": 5,
+    "s\u00e1u": 6,
+    "b\u1ea3y": 7,
+    "t\u00e1m": 8,
+    "ch\u00edn": 9,
+    "m\u01b0\u1eddi": 10,
+    "m\u01b0\u1eddi m\u1ed9t": 11,
+    "m\u01b0\u1eddi hai": 12,
+};
+exports.TIME_UNIT_DICTIONARY = {
+    "gi\u00e2y": "second",
+    "ph\u00fat": "minute",
+    "gi\u1edd": "hour",
+    "ng\u00e0y": "day",
+    "tu\u1ea7n": "week",
+    "th\u00e1ng": "month",
+    "n\u0103m": "year",
+};
+exports.NUMBER_PATTERN = "(?:" + (0, pattern_1.matchAnyPattern)(exports.INTEGER_WORD_DICTIONARY) + "|[0-9]+|[0-9]+\\.[0-9]+)";
+function parseNumberPattern(match) {
+    const num = match.toLowerCase();
+    if (exports.INTEGER_WORD_DICTIONARY[num] !== undefined)
+        return exports.INTEGER_WORD_DICTIONARY[num];
+    return parseFloat(num);
+}
+exports.YEAR_PATTERN = "(?:[0-9]{1,4}(?:\\s*TCN)?)";
+function parseYear(match) {
+    const upper = match.toUpperCase();
+    const num = parseInt(match.replace(/[^0-9]+/g, ""));
+    if (/TCN/.test(upper))
+        return -num;
+    return (0, years_1.findMostLikelyADYear)(num);
+}
+const SINGLE_TIME_UNIT_PATTERN = "(" + exports.NUMBER_PATTERN + ")\\s{0,5}(" + (0, pattern_1.matchAnyPattern)(exports.TIME_UNIT_DICTIONARY) + ")\\s{0,5}";
+const SINGLE_TIME_UNIT_REGEX = new RegExp(SINGLE_TIME_UNIT_PATTERN, "i");
+exports.TIME_UNITS_PATTERN = (0, pattern_1.repeatedTimeunitPattern)("", SINGLE_TIME_UNIT_PATTERN);
+function parseDuration(timeunitText) {
+    const fragments = {};
+    let remainingText = timeunitText;
+    let match = SINGLE_TIME_UNIT_REGEX.exec(remainingText);
+    while (match) {
+        const num = parseNumberPattern(match[1]);
+        const unit = exports.TIME_UNIT_DICTIONARY[match[2].toLowerCase()];
+        fragments[unit] = num;
+        remainingText = remainingText.substring(match[0].length);
+        match = SINGLE_TIME_UNIT_REGEX.exec(remainingText);
+    }
+    return fragments;
+}
+//# sourceMappingURL=constants.js.map
+
+/***/ }),
+
+/***/ 70629:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.strict = exports.casual = exports.Weekday = exports.Meridiem = exports.ReferenceWithTimezone = exports.ParsingComponents = exports.ParsingResult = exports.Chrono = void 0;
+exports.parse = parse;
+exports.parseDate = parseDate;
+exports.createCasualConfiguration = createCasualConfiguration;
+exports.createConfiguration = createConfiguration;
+const configurations_1 = __nccwpck_require__(77352);
+const chrono_1 = __nccwpck_require__(55856);
+Object.defineProperty(exports, "Chrono", ({ enumerable: true, get: function () { return chrono_1.Chrono; } }));
+const results_1 = __nccwpck_require__(86033);
+Object.defineProperty(exports, "ParsingResult", ({ enumerable: true, get: function () { return results_1.ParsingResult; } }));
+Object.defineProperty(exports, "ParsingComponents", ({ enumerable: true, get: function () { return results_1.ParsingComponents; } }));
+Object.defineProperty(exports, "ReferenceWithTimezone", ({ enumerable: true, get: function () { return results_1.ReferenceWithTimezone; } }));
+const types_1 = __nccwpck_require__(12754);
+Object.defineProperty(exports, "Meridiem", ({ enumerable: true, get: function () { return types_1.Meridiem; } }));
+Object.defineProperty(exports, "Weekday", ({ enumerable: true, get: function () { return types_1.Weekday; } }));
+const ISOFormatParser_1 = __importDefault(__nccwpck_require__(8943));
+const SlashDateFormatParser_1 = __importDefault(__nccwpck_require__(99415));
+const VIStandardParser_1 = __importDefault(__nccwpck_require__(14883));
+const VIMonthYearParser_1 = __importDefault(__nccwpck_require__(74989));
+const VIYearParser_1 = __importDefault(__nccwpck_require__(77207));
+const VICasualDateParser_1 = __importDefault(__nccwpck_require__(47295));
+const VICasualTimeParser_1 = __importDefault(__nccwpck_require__(51238));
+const VIWeekdayParser_1 = __importDefault(__nccwpck_require__(5128));
+const VITimeExpressionParser_1 = __importDefault(__nccwpck_require__(58453));
+const VITimeUnitAgoFormatParser_1 = __importDefault(__nccwpck_require__(20613));
+const VITimeUnitLaterFormatParser_1 = __importDefault(__nccwpck_require__(71326));
+const VITimeUnitWithinFormatParser_1 = __importDefault(__nccwpck_require__(10357));
+const VITimeUnitCasualRelativeFormatParser_1 = __importDefault(__nccwpck_require__(66219));
+const VIMergeDateRangeRefiner_1 = __importDefault(__nccwpck_require__(32761));
+const VIMergeDateTimeRefiner_1 = __importDefault(__nccwpck_require__(69189));
+const VIMergeWeekdayComponentRefiner_1 = __importDefault(__nccwpck_require__(88453));
+exports.casual = new chrono_1.Chrono(createCasualConfiguration());
+exports.strict = new chrono_1.Chrono(createConfiguration(true));
+function parse(text, ref, option) {
+    return exports.casual.parse(text, ref, option);
+}
+function parseDate(text, ref, option) {
+    return exports.casual.parseDate(text, ref, option);
+}
+function createCasualConfiguration(littleEndian = true) {
+    const option = createConfiguration(false, littleEndian);
+    option.parsers.unshift(new VICasualTimeParser_1.default());
+    option.parsers.unshift(new VICasualDateParser_1.default());
+    option.parsers.unshift(new VITimeUnitCasualRelativeFormatParser_1.default());
+    return option;
+}
+function createConfiguration(strictMode = true, littleEndian = true) {
+    return (0, configurations_1.includeCommonConfiguration)({
+        parsers: [
+            new ISOFormatParser_1.default(),
+            new SlashDateFormatParser_1.default(littleEndian),
+            new VIStandardParser_1.default(),
+            new VIMonthYearParser_1.default(),
+            new VIYearParser_1.default(),
+            new VIWeekdayParser_1.default(),
+            new VITimeExpressionParser_1.default(),
+            new VITimeUnitAgoFormatParser_1.default(strictMode),
+            new VITimeUnitLaterFormatParser_1.default(strictMode),
+            new VITimeUnitWithinFormatParser_1.default(strictMode),
+        ],
+        refiners: [
+            new VIMergeWeekdayComponentRefiner_1.default(),
+            new VIMergeDateRangeRefiner_1.default(),
+            new VIMergeDateTimeRefiner_1.default(),
+        ],
+    }, strictMode);
+}
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 47295:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const references = __importStar(__nccwpck_require__(95858));
+const PATTERN = /\b(hôm nay|hôm qua|hôm kia|ngày mai|ngày kia|bây giờ|lúc này)(?=\W|$)/i;
+class VICasualDateParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        switch (match[1].toLowerCase()) {
+            case "bây giờ":
+            case "lúc này":
+                return references.now(context.reference);
+            case "hôm nay":
+                return references.today(context.reference);
+            case "hôm qua":
+                return references.yesterday(context.reference);
+            case "hôm kia":
+                return references.theDayBefore(context.reference, 2);
+            case "ngày mai":
+                return references.tomorrow(context.reference);
+            case "ngày kia":
+                return references.theDayAfter(context.reference, 2);
+        }
+        return context.createParsingComponents();
+    }
+}
+exports["default"] = VICasualDateParser;
+//# sourceMappingURL=VICasualDateParser.js.map
+
+/***/ }),
+
+/***/ 51238:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const types_1 = __nccwpck_require__(12754);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const dates_1 = __nccwpck_require__(8552);
+const PATTERN = /(buổi\s*)?(sáng sớm|sáng|trưa|chiều|tối|đêm|nửa đêm|bình minh)(?=\W|$)/i;
+class VICasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const component = context.createParsingComponents();
+        (0, dates_1.implySimilarTime)(component, context.refDate);
+        return VICasualTimeParser.extractTimeComponents(component, match[2].toLowerCase());
+    }
+    static extractTimeComponents(component, keyword) {
+        switch (keyword) {
+            case "b\u00ecnh minh":
+            case "s\u00e1ng s\u1edbm":
+                component.imply("hour", 6);
+                component.imply("minute", 0);
+                component.imply("meridiem", types_1.Meridiem.AM);
+                break;
+            case "s\u00e1ng":
+                component.imply("hour", 9);
+                component.imply("minute", 0);
+                component.imply("meridiem", types_1.Meridiem.AM);
+                break;
+            case "tr\u01b0a":
+                component.imply("hour", 12);
+                component.imply("minute", 0);
+                component.imply("meridiem", types_1.Meridiem.PM);
+                break;
+            case "chi\u1ec1u":
+                component.imply("hour", 15);
+                component.imply("minute", 0);
+                component.imply("meridiem", types_1.Meridiem.PM);
+                break;
+            case "t\u1ed1i":
+                component.imply("hour", 19);
+                component.imply("minute", 0);
+                component.imply("meridiem", types_1.Meridiem.PM);
+                break;
+            case "\u0111\u00eam":
+                component.imply("hour", 22);
+                component.imply("minute", 0);
+                component.imply("meridiem", types_1.Meridiem.PM);
+                break;
+            case "n\u1eeda \u0111\u00eam":
+                component.imply("hour", 0);
+                component.imply("minute", 0);
+                component.imply("meridiem", types_1.Meridiem.AM);
+                break;
+        }
+        return component;
+    }
+}
+exports["default"] = VICasualTimeParser;
+//# sourceMappingURL=VICasualTimeParser.js.map
+
+/***/ }),
+
+/***/ 74989:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(48028);
+const pattern_1 = __nccwpck_require__(77907);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const PATTERN = new RegExp("(" + (0, pattern_1.matchAnyPattern)(constants_1.MONTH_DICTIONARY) + ")" + "(?:\\s*(?:năm|/)\\s*(" + constants_1.YEAR_PATTERN + "))?" + "(?=\\W|$)", "i");
+const MONTH_GROUP = 1;
+const YEAR_GROUP = 2;
+class VIMonthYearParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const month = constants_1.MONTH_DICTIONARY[match[MONTH_GROUP].toLowerCase()];
+        if (!month)
+            return null;
+        const result = context.createParsingResult(match.index, match[0]);
+        result.start.assign("month", month);
+        result.start.imply("day", 1);
+        if (match[YEAR_GROUP]) {
+            result.start.assign("year", (0, constants_1.parseYear)(match[YEAR_GROUP]));
+        }
+        else {
+            result.start.imply("year", context.reference.getDateWithAdjustedTimezone().getFullYear());
+        }
+        return result;
+    }
+}
+exports["default"] = VIMonthYearParser;
+//# sourceMappingURL=VIMonthYearParser.js.map
+
+/***/ }),
+
+/***/ 14883:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const years_1 = __nccwpck_require__(53683);
+const constants_1 = __nccwpck_require__(48028);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const PATTERN = new RegExp("(?:ng\u00e0y\\s*)?" +
+    "([0-9]{1,2})" +
+    "\\s*th\u00e1ng\\s*" +
+    "([0-9]{1,2})" +
+    "(?:\\s*n\u0103m\\s*(" +
+    constants_1.YEAR_PATTERN +
+    "))?" +
+    "(?=\\W|$)", "i");
+const DAY_GROUP = 1;
+const MONTH_GROUP = 2;
+const YEAR_GROUP = 3;
+class VIStandardParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const day = parseInt(match[DAY_GROUP]);
+        const month = parseInt(match[MONTH_GROUP]);
+        if (day > 31 || month > 12)
+            return null;
+        const result = context.createParsingResult(match.index, match[0]);
+        result.start.assign("day", day);
+        result.start.assign("month", month);
+        if (match[YEAR_GROUP]) {
+            result.start.assign("year", (0, constants_1.parseYear)(match[YEAR_GROUP]));
+        }
+        else {
+            result.start.imply("year", (0, years_1.findYearClosestToRef)(context.refDate, day, month));
+        }
+        return result;
+    }
+}
+exports["default"] = VIStandardParser;
+//# sourceMappingURL=VIStandardParser.js.map
+
+/***/ }),
+
+/***/ 58453:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const types_1 = __nccwpck_require__(12754);
+const PATTERN = new RegExp("(?:l\u00fac\\s*|v\u00e0o\\s*)?" +
+    "([0-9]{1,2})" +
+    "(?:\\s*gi\u1edd\\s*([0-9]{1,2})?\\s*(?:ph\u00fat\\s*)?" +
+    "(s\u00e1ng|tr\u01b0a|chi\u1ec1u|t\u1ed1i|\u0111\u00eam)?" +
+    "|:([0-9]{2}))" +
+    "(?=\\W|$)", "i");
+const HOUR_GROUP = 1;
+const MINUTE_GIO_GROUP = 2;
+const MERIDIEM_GROUP = 3;
+const MINUTE_COLON_GROUP = 4;
+class VITimeExpressionParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        var _a;
+        const hour = parseInt(match[HOUR_GROUP]);
+        if (hour > 23)
+            return null;
+        const result = context.createParsingResult(match.index, match[0]);
+        result.start.assign("hour", hour);
+        const minute = match[MINUTE_COLON_GROUP]
+            ? parseInt(match[MINUTE_COLON_GROUP])
+            : match[MINUTE_GIO_GROUP]
+                ? parseInt(match[MINUTE_GIO_GROUP])
+                : 0;
+        if (minute >= 60)
+            return null;
+        result.start.assign("minute", minute);
+        const meridiem = (_a = match[MERIDIEM_GROUP]) === null || _a === void 0 ? void 0 : _a.toLowerCase();
+        if (meridiem === "sáng") {
+            result.start.assign("meridiem", types_1.Meridiem.AM);
+            if (hour === 12)
+                result.start.assign("hour", 0);
+        }
+        else if (meridiem === "trưa") {
+            if (hour < 10) {
+                result.start.assign("meridiem", types_1.Meridiem.PM);
+                result.start.assign("hour", hour + 12);
+            }
+            else {
+                result.start.assign("meridiem", hour >= 12 ? types_1.Meridiem.PM : types_1.Meridiem.AM);
+            }
+        }
+        else if (meridiem === "chiều" || meridiem === "tối" || meridiem === "đêm") {
+            result.start.assign("meridiem", types_1.Meridiem.PM);
+            if (hour < 12)
+                result.start.assign("hour", hour + 12);
+        }
+        result.start.imply("second", 0);
+        result.start.imply("millisecond", 0);
+        return result;
+    }
+}
+exports["default"] = VITimeExpressionParser;
+//# sourceMappingURL=VITimeExpressionParser.js.map
+
+/***/ }),
+
+/***/ 20613:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(48028);
+const results_1 = __nccwpck_require__(86033);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const duration_1 = __nccwpck_require__(35945);
+const PATTERN = new RegExp("(" + constants_1.TIME_UNITS_PATTERN + ")" + "\\s{0,5}(?:tr\u01b0\u1edbc|qua)(?=\\W|$)", "i");
+class VITimeUnitAgoFormatParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    constructor(strictMode = false) {
+        super();
+        this.strictMode = strictMode;
+    }
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const duration = (0, constants_1.parseDuration)(match[1]);
+        if (!duration)
+            return null;
+        return results_1.ParsingComponents.createRelativeFromReference(context.reference, (0, duration_1.reverseDuration)(duration));
+    }
+}
+exports["default"] = VITimeUnitAgoFormatParser;
+//# sourceMappingURL=VITimeUnitAgoFormatParser.js.map
+
+/***/ }),
+
+/***/ 66219:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(48028);
+const results_1 = __nccwpck_require__(86033);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const duration_1 = __nccwpck_require__(35945);
+const pattern_1 = __nccwpck_require__(77907);
+const CASUAL_UNIT_PATTERN = "(?:" + constants_1.NUMBER_PATTERN + "\\s{0,5})?(?:" + (0, pattern_1.matchAnyPattern)(constants_1.TIME_UNIT_DICTIONARY) + ")";
+const PATTERN = new RegExp("(này|trước|qua|sau|tới|tiếp)\\s*(" +
+    CASUAL_UNIT_PATTERN +
+    ")" +
+    "|(" +
+    CASUAL_UNIT_PATTERN +
+    ")\\s*(này|trước|qua|sau|tới|tiếp)" +
+    "(?=\\W|$)", "i");
+class VITimeUnitCasualRelativeFormatParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const modifier = (match[1] || match[4] || "").toLowerCase();
+        const unitText = (match[2] || match[3] || "").toLowerCase();
+        let duration = (0, constants_1.parseDuration)(unitText);
+        if (Object.keys(duration).length === 0) {
+            const unit = constants_1.TIME_UNIT_DICTIONARY[unitText];
+            if (!unit)
+                return null;
+            duration = { [unit]: 1 };
+        }
+        if (modifier === "trước" || modifier === "qua") {
+            duration = (0, duration_1.reverseDuration)(duration);
+        }
+        return results_1.ParsingComponents.createRelativeFromReference(context.reference, duration);
+    }
+}
+exports["default"] = VITimeUnitCasualRelativeFormatParser;
+//# sourceMappingURL=VITimeUnitCasualRelativeFormatParser.js.map
+
+/***/ }),
+
+/***/ 71326:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(48028);
+const results_1 = __nccwpck_require__(86033);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const PATTERN = new RegExp("(" + constants_1.TIME_UNITS_PATTERN + ")" + "\\s{0,5}(?:sau|n\u1eefa|t\u1edbi|ti\u1ebfp)(?=\\W|$)", "i");
+class VITimeUnitLaterFormatParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    constructor(strictMode = false) {
+        super();
+        this.strictMode = strictMode;
+    }
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const duration = (0, constants_1.parseDuration)(match[1]);
+        if (!duration)
+            return null;
+        return results_1.ParsingComponents.createRelativeFromReference(context.reference, duration);
+    }
+}
+exports["default"] = VITimeUnitLaterFormatParser;
+//# sourceMappingURL=VITimeUnitLaterFormatParser.js.map
+
+/***/ }),
+
+/***/ 10357:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(48028);
+const results_1 = __nccwpck_require__(86033);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const PATTERN = new RegExp("(?:trong\\s*(?:v\u00f2ng\\s*)?)" + "(" + constants_1.TIME_UNITS_PATTERN + ")(?=\\W|$)", "i");
+class VITimeUnitWithinFormatParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    constructor(strictMode = false) {
+        super();
+        this.strictMode = strictMode;
+    }
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const timeUnits = (0, constants_1.parseDuration)(match[1]);
+        if (!timeUnits)
+            return null;
+        return results_1.ParsingComponents.createRelativeFromReference(context.reference, timeUnits);
+    }
+}
+exports["default"] = VITimeUnitWithinFormatParser;
+//# sourceMappingURL=VITimeUnitWithinFormatParser.js.map
+
+/***/ }),
+
+/***/ 5128:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(48028);
+const pattern_1 = __nccwpck_require__(77907);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const weekdays_1 = __nccwpck_require__(88374);
+const PATTERN = new RegExp("(" +
+    (0, pattern_1.matchAnyPattern)(constants_1.WEEKDAY_DICTIONARY) +
+    ")" +
+    "(?:\\s*(này|tới|sau(?!\\s*khi)|qua))?" +
+    "(?=\\W|$)", "i");
+const WEEKDAY_GROUP = 1;
+const MODIFIER_GROUP = 2;
+class VIWeekdayParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const dowText = match[WEEKDAY_GROUP].toLowerCase();
+        const dow = constants_1.WEEKDAY_DICTIONARY[dowText];
+        if (dow === undefined)
+            return null;
+        const modifier = match[MODIFIER_GROUP];
+        let modifierType = null;
+        if (modifier) {
+            const m = modifier.toLowerCase();
+            if (m.includes("tới") || m.includes("sau"))
+                modifierType = "next";
+            else if (m.includes("qua"))
+                modifierType = "last";
+        }
+        return (0, weekdays_1.createParsingComponentsAtWeekday)(context.reference, dow, modifierType);
+    }
+}
+exports["default"] = VIWeekdayParser;
+//# sourceMappingURL=VIWeekdayParser.js.map
+
+/***/ }),
+
+/***/ 77207:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(48028);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const PATTERN = new RegExp("(?:\\bnăm\\s*(" + constants_1.YEAR_PATTERN + ")|\\b([0-9]{1,4})\\s*(TCN))(?=\\W|$)", "i");
+const YEAR_WITH_NAM_GROUP = 1;
+const BARE_BC_YEAR_GROUP = 2;
+const BARE_BC_SUFFIX_GROUP = 3;
+class VIYearParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        let yearText;
+        if (match[YEAR_WITH_NAM_GROUP]) {
+            yearText = match[YEAR_WITH_NAM_GROUP];
+        }
+        else {
+            yearText = match[BARE_BC_YEAR_GROUP] + " " + match[BARE_BC_SUFFIX_GROUP];
+        }
+        const result = context.createParsingResult(match.index, match[0]);
+        result.start.assign("year", (0, constants_1.parseYear)(yearText));
+        result.start.imply("month", 1);
+        result.start.imply("day", 1);
+        return result;
+    }
+}
+exports["default"] = VIYearParser;
+//# sourceMappingURL=VIYearParser.js.map
+
+/***/ }),
+
+/***/ 32761:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractMergeDateRangeRefiner_1 = __importDefault(__nccwpck_require__(88560));
+class VIMergeDateRangeRefiner extends AbstractMergeDateRangeRefiner_1.default {
+    patternBetween() {
+        return /^\s*(?:–|-|đến|tới|và)\s*$/;
+    }
+}
+exports["default"] = VIMergeDateRangeRefiner;
+//# sourceMappingURL=VIMergeDateRangeRefiner.js.map
+
+/***/ }),
+
+/***/ 69189:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractMergeDateTimeRefiner_1 = __importDefault(__nccwpck_require__(79682));
+class VIMergeDateTimeRefiner extends AbstractMergeDateTimeRefiner_1.default {
+    patternBetween() {
+        return /^\s*(?:lúc|vào|,|T|-)?\s*$/;
+    }
+}
+exports["default"] = VIMergeDateTimeRefiner;
+//# sourceMappingURL=VIMergeDateTimeRefiner.js.map
+
+/***/ }),
+
+/***/ 88453:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const MergeWeekdayComponentRefiner_1 = __importDefault(__nccwpck_require__(62204));
+class VIMergeWeekdayComponentRefiner extends MergeWeekdayComponentRefiner_1.default {
+}
+exports["default"] = VIMergeWeekdayComponentRefiner;
+//# sourceMappingURL=VIMergeWeekdayComponentRefiner.js.map
+
+/***/ }),
+
 /***/ 91178:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -64321,6 +65809,9 @@ const MINUTE_GROUP = 7;
 const SECOND_GROUP = 8;
 const AM_PM_HOUR_GROUP = 9;
 class ZHHansTimeExpressionParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    patternLeftBoundary() {
+        return "()";
+    }
     innerPattern() {
         return FIRST_REG_PATTERN;
     }
@@ -64329,11 +65820,11 @@ class ZHHansTimeExpressionParser extends AbstractParserWithWordBoundary_1.Abstra
             return null;
         }
         const result = context.createParsingResult(match.index, match[0]);
-        const startMoment = new Date(context.refDate.getTime());
+        const startMoment = new Date(context.reference.instant.getTime());
         if (match[DAY_GROUP_1]) {
             const day1 = match[DAY_GROUP_1];
             if (day1 == "明") {
-                if (context.refDate.getHours() > 1) {
+                if (context.reference.instant.getHours() > 1) {
                     startMoment.setDate(startMoment.getDate() + 1);
                 }
             }
@@ -64505,12 +65996,15 @@ class ZHHansTimeExpressionParser extends AbstractParserWithWordBoundary_1.Abstra
             }
             return result;
         }
-        const endMoment = new Date(startMoment.getTime());
+        let endMoment = new Date(startMoment.getTime());
+        if (secondMatch[DAY_GROUP_1] || secondMatch[DAY_GROUP_3]) {
+            endMoment = new Date(context.reference.instant.getTime());
+        }
         result.end = context.createParsingComponents();
         if (secondMatch[DAY_GROUP_1]) {
             const day1 = secondMatch[DAY_GROUP_1];
             if (day1 == "明") {
-                if (context.refDate.getHours() > 1) {
+                if (context.reference.instant.getHours() > 1) {
                     endMoment.setDate(endMoment.getDate() + 1);
                 }
             }
@@ -65343,6 +66837,9 @@ const MINUTE_GROUP = 7;
 const SECOND_GROUP = 8;
 const AM_PM_HOUR_GROUP = 9;
 class ZHHantTimeExpressionParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    patternLeftBoundary() {
+        return "()";
+    }
     innerPattern() {
         return FIRST_REG_PATTERN;
     }
@@ -65351,7 +66848,7 @@ class ZHHantTimeExpressionParser extends AbstractParserWithWordBoundary_1.Abstra
             return null;
         }
         const result = context.createParsingResult(match.index, match[0]);
-        const startMoment = new Date(context.refDate.getTime());
+        const startMoment = new Date(context.reference.instant.getTime());
         if (match[DAY_GROUP_1]) {
             const day1 = match[DAY_GROUP_1];
             if (day1 == "明" || day1 == "聽") {
@@ -65527,7 +67024,10 @@ class ZHHantTimeExpressionParser extends AbstractParserWithWordBoundary_1.Abstra
             }
             return result;
         }
-        const endMoment = new Date(startMoment.getTime());
+        let endMoment = new Date(startMoment.getTime());
+        if (secondMatch[DAY_GROUP_1] || secondMatch[DAY_GROUP_3]) {
+            endMoment = new Date(context.reference.instant.getTime());
+        }
         result.end = context.createParsingComponents();
         if (secondMatch[DAY_GROUP_1]) {
             const day1 = secondMatch[DAY_GROUP_1];
@@ -65958,7 +67458,7 @@ class ReferenceWithTimezone {
     }
     getSystemTimezoneAdjustmentMinute(date, overrideTimezoneOffset) {
         var _a;
-        if (!date || date.getTime() < 0) {
+        if (!date) {
             date = new Date();
         }
         const currentTimezoneOffset = -date.getTimezoneOffset();
