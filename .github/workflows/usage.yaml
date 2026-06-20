@@ -1,9 +1,5 @@
 name: 📅 Schedule Workflow Dispatch
 on:
-  push:
-  pull_request:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       date:
