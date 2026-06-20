@@ -72,5 +72,8 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^7.18.0"
+  },
+  "overrides": {
+    "undici": "^6.27.0"
   }
 }
