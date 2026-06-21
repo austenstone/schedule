@@ -9,8 +9,8 @@ on:
         default: 'in 1 hour'
       workflow:
         description: 'Workflow to run at schedule time'
-        required: true
         type: choice
+        default: 'basic.yml'
         options:
           - 'basic.yml'
           - 'codeql.yml'
