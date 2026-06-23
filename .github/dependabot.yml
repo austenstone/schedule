@@ -18,8 +18,21 @@ updates:
     # @actions/core and @actions/github v3+ are ESM-only and break ncc CJS bundles.
     # Pin to majors only when v4+ or a CJS-friendly release ships.
     # Same pattern as austenstone/activity. See austenstone-notes LESSONS_LEARNED.md.
+    # eslint v9+ plugin majors (eslint-plugin-jest 29, eslint-plugin-github 6, @eslint/js 10,
+    # @typescript-eslint/* 8+) require eslint v9 peer dep; this repo is on eslint v8.
+    # Ignore plugin majors until an eslint v8→v9 coordinated upgrade. PRs #85/#87/#91/#93 closed.
     ignore:
       - dependency-name: "@actions/core"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@actions/github"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-plugin-jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-plugin-github"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@typescript-eslint/eslint-plugin"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript-eslint"
         update-types: ["version-update:semver-major"]
