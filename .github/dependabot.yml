@@ -10,8 +10,16 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-      
+
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
+    # @actions/core and @actions/github v3+ are ESM-only and break ncc CJS bundles.
+    # Pin to majors only when v4+ or a CJS-friendly release ships.
+    # Same pattern as austenstone/activity. See austenstone-notes LESSONS_LEARNED.md.
+    ignore:
+      - dependency-name: "@actions/core"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@actions/github"
+        update-types: ["version-update:semver-major"]
