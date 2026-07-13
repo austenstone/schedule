@@ -38035,12 +38035,14 @@ class DECasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/morning");
                 break;
             case "vormittag":
                 component.imply("hour", 9);
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/morning");
                 break;
             case "mittag":
             case "mittags":
@@ -38048,24 +38050,28 @@ class DECasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/noon");
                 break;
             case "nachmittag":
                 component.imply("hour", 15);
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.PM);
+                component.addTag("casualReference/afternoon");
                 break;
             case "abend":
                 component.imply("hour", 18);
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.PM);
+                component.addTag("casualReference/evening");
                 break;
             case "nacht":
                 component.imply("hour", 22);
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.PM);
+                component.addTag("casualReference/evening");
                 break;
             case "mitternacht":
                 if (component.get("hour") > 1) {
@@ -38075,6 +38081,7 @@ class DECasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/midnight");
                 break;
         }
         return component;
@@ -38459,6 +38466,7 @@ const ENMonthNameLittleEndianParser_1 = __importDefault(__nccwpck_require__(9072
 const ENMonthNameMiddleEndianParser_1 = __importDefault(__nccwpck_require__(59913));
 const ENMonthNameParser_1 = __importDefault(__nccwpck_require__(20091));
 const ENYearMonthDayParser_1 = __importDefault(__nccwpck_require__(12515));
+const ENYearMonthNameParser_1 = __importDefault(__nccwpck_require__(73824));
 const ENSlashMonthFormatParser_1 = __importDefault(__nccwpck_require__(65500));
 const ENTimeExpressionParser_1 = __importDefault(__nccwpck_require__(14649));
 const ENTimeUnitAgoFormatParser_1 = __importDefault(__nccwpck_require__(10345));
@@ -38500,6 +38508,7 @@ class ENDefaultConfiguration {
                 new ENTimeExpressionParser_1.default(strictMode),
                 new ENTimeUnitAgoFormatParser_1.default(strictMode),
                 new ENTimeUnitLaterFormatParser_1.default(strictMode),
+                new ENYearMonthNameParser_1.default(),
             ],
             refiners: [new ENMergeDateTimeRefiner_1.default()],
         }, strictMode);
@@ -38952,7 +38961,7 @@ const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
 const PATTERN = new RegExp(`(?:on\\s{0,3})?` +
     `(${constants_3.ORDINAL_NUMBER_PATTERN})` +
     `(?:` +
-    `\\s{0,3}(?:to|\\-|\\–|until|through|till)?\\s{0,3}` +
+    `\\s{0,3}(?:to|\\-|\\–|until|through|till)\\s{0,3}` +
     `(${constants_3.ORDINAL_NUMBER_PATTERN})` +
     ")?" +
     `(?:-|/|\\s{0,3}(?:of)?\\s{0,3})` +
@@ -39550,6 +39559,44 @@ class ENYearMonthDayParser extends AbstractParserWithWordBoundary_1.AbstractPars
 }
 exports["default"] = ENYearMonthDayParser;
 //# sourceMappingURL=ENYearMonthDayParser.js.map
+
+/***/ }),
+
+/***/ 73824:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(2590);
+const pattern_1 = __nccwpck_require__(77907);
+const constants_2 = __nccwpck_require__(2590);
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const YEAR_PATTERN = `(?:[1-9][0-9]{0,3}\\s{0,2}(?:BE|AD|BC|BCE|CE)|[1-9][0-9]{3})`;
+const PATTERN = new RegExp(`(${YEAR_PATTERN})` +
+    `(?:\\s*[-.\\/,]?\\s*|\\s+of\\s+)` +
+    `(${(0, pattern_1.matchAnyPattern)(constants_1.MONTH_DICTIONARY)})` +
+    `(?=[^\\s\\w]|\\s+[^0-9]|\\s+$|$)`, "i");
+const YEAR_GROUP = 1;
+const MONTH_NAME_GROUP = 2;
+class ENYearMonthNameParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const year = (0, constants_2.parseYear)(match[YEAR_GROUP]);
+        const monthName = match[MONTH_NAME_GROUP].toLowerCase();
+        const month = constants_1.MONTH_DICTIONARY[monthName];
+        const result = context.createParsingResult(match.index, match[0]);
+        result.start.imply("day", 1);
+        result.start.assign("month", month);
+        result.start.assign("year", year);
+        result.start.addTag("parser/ENYearMonthNameParser");
+        return result;
+    }
+}
+exports["default"] = ENYearMonthNameParser;
+//# sourceMappingURL=ENYearMonthNameParser.js.map
 
 /***/ }),
 
@@ -40714,36 +40761,42 @@ class FICasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/morning");
                 break;
             case "aamupäivällä":
                 component.imply("hour", 9);
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/morning");
                 break;
             case "päivällä":
                 component.imply("hour", 12);
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/noon");
                 break;
             case "iltapäivällä":
                 component.imply("hour", 15);
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.PM);
+                component.addTag("casualReference/afternoon");
                 break;
             case "illalla":
                 component.imply("hour", 18);
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.PM);
+                component.addTag("casualReference/evening");
                 break;
             case "yöllä":
                 component.imply("hour", 22);
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.PM);
+                component.addTag("casualReference/evening");
                 break;
             case "keskiyöllä":
                 if (component.get("hour") > 1) {
@@ -40753,6 +40806,7 @@ class FICasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("minute", 0);
                 component.imply("second", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/midnight");
                 break;
         }
         return component;
@@ -41370,25 +41424,30 @@ class FRCasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("hour", 14);
                 component.imply("minute", 0);
                 component.imply("meridiem", types_1.Meridiem.PM);
+                component.addTag("casualReference/afternoon");
                 break;
             case "soir":
                 component.imply("hour", 18);
                 component.imply("minute", 0);
                 component.imply("meridiem", types_1.Meridiem.PM);
+                component.addTag("casualReference/evening");
                 break;
             case "matin":
                 component.imply("hour", 8);
                 component.imply("minute", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/morning");
                 break;
             case "a midi":
                 component.imply("hour", 12);
                 component.imply("minute", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/noon");
                 break;
             case "à minuit":
                 component.imply("hour", 0);
                 component.imply("meridiem", types_1.Meridiem.AM);
+                component.addTag("casualReference/midnight");
                 break;
         }
         return component;
@@ -41638,7 +41697,8 @@ class FRTimeUnitAgoFormatParser extends AbstractParserWithWordBoundary_1.Abstrac
             `(${constants_1.NUMBER_PATTERN})?` +
             `(?:\\s*(prochaine?s?|derni[eè]re?s?|pass[ée]e?s?|pr[ée]c[ée]dents?|suivante?s?))?` +
             `\\s*(${(0, pattern_1.matchAnyPattern)(constants_1.TIME_UNIT_DICTIONARY)})` +
-            `(?:\\s*(prochaine?s?|derni[eè]re?s?|pass[ée]e?s?|pr[ée]c[ée]dents?|suivante?s?))?`, "i");
+            `(?:\\s*(prochaine?s?|derni[eè]re?s?|pass[ée]e?s?|pr[ée]c[ée]dents?|suivante?s?))?` +
+            `(?=\\W|$)`, "i");
     }
     innerExtract(context, match) {
         const num = match[1] ? (0, constants_1.parseNumberPattern)(match[1]) : 1;
@@ -42120,11 +42180,13 @@ class ITCasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
             case "pomeriggio":
                 component.imply("meridiem", index_1.Meridiem.PM);
                 component.imply("hour", 15);
+                component.addTag("casualReference/afternoon");
                 break;
             case "sera":
             case "notte":
                 component.imply("meridiem", index_1.Meridiem.PM);
                 component.imply("hour", 20);
+                component.addTag("casualReference/evening");
                 break;
             case "mezzanotte":
                 const nextDay = new Date(targetDate.getTime());
@@ -42134,14 +42196,17 @@ class ITCasualTimeParser extends AbstractParserWithWordBoundary_1.AbstractParser
                 component.imply("hour", 0);
                 component.imply("minute", 0);
                 component.imply("second", 0);
+                component.addTag("casualReference/midnight");
                 break;
             case "mattina":
                 component.imply("meridiem", index_1.Meridiem.AM);
                 component.imply("hour", 6);
+                component.addTag("casualReference/morning");
                 break;
             case "mezzogiorno":
                 component.imply("meridiem", index_1.Meridiem.AM);
                 component.imply("hour", 12);
+                component.addTag("casualReference/noon");
                 break;
         }
         return component;
@@ -47248,7 +47313,7 @@ class UKTimeUnitWithinFormatParser extends AbstractParserWithWordBoundary_1.Abst
     }
     innerPattern(context) {
         return context.option.forwardDate
-            ? new RegExp(PATTERN, "i")
+            ? new RegExp(PATTERN, constants_1.REGEX_PARTS.flags)
             : new RegExp(`(?:протягом|на протязі|протягом|упродовж|впродовж)\\s*${PATTERN}`, constants_1.REGEX_PARTS.flags);
     }
     innerExtract(context, match) {
@@ -48191,6 +48256,7 @@ Object.defineProperty(exports, "Weekday", ({ enumerable: true, get: function () 
 const ZHHansCasualDateParser_1 = __importDefault(__nccwpck_require__(27974));
 const ZHHansDateParser_1 = __importDefault(__nccwpck_require__(72515));
 const ZHHansDeadlineFormatParser_1 = __importDefault(__nccwpck_require__(46544));
+const ZHHansAgoFormatParser_1 = __importDefault(__nccwpck_require__(12339));
 const ZHHansRelationWeekdayParser_1 = __importDefault(__nccwpck_require__(69075));
 const ZHHansTimeExpressionParser_1 = __importDefault(__nccwpck_require__(34296));
 const ZHHansWeekdayParser_1 = __importDefault(__nccwpck_require__(70747));
@@ -48218,6 +48284,7 @@ function createConfiguration() {
             new ZHHansWeekdayParser_1.default(),
             new ZHHansTimeExpressionParser_1.default(),
             new ZHHansDeadlineFormatParser_1.default(),
+            new ZHHansAgoFormatParser_1.default(),
         ],
         refiners: [new ZHHansMergeDateRangeRefiner_1.default(), new ZHHansMergeDateTimeRefiner_1.default()],
     });
@@ -48225,6 +48292,93 @@ function createConfiguration() {
     return configuration;
 }
 //# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 12339:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const duration_1 = __nccwpck_require__(35945);
+const constants_1 = __nccwpck_require__(91178);
+const PATTERN = new RegExp("(\\d+|[" +
+    Object.keys(constants_1.NUMBER).join("") +
+    "]+|半|几)(?:\\s*)" +
+    "(?:个)?" +
+    "(秒(?:钟)?|分钟|小时|钟|日|天|星期|礼拜|月|年)" +
+    "(?:之)?前", "i");
+const NUMBER_GROUP = 1;
+const UNIT_GROUP = 2;
+class ZHHansAgoFormatParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const result = context.createParsingResult(match.index, match[0]);
+        let number = parseInt(match[NUMBER_GROUP]);
+        if (isNaN(number)) {
+            number = (0, constants_1.zhStringToNumber)(match[NUMBER_GROUP]);
+        }
+        if (isNaN(number)) {
+            const string = match[NUMBER_GROUP];
+            if (string === "几") {
+                number = 3;
+            }
+            else if (string === "半") {
+                number = 0.5;
+            }
+            else {
+                return null;
+            }
+        }
+        let duration = {};
+        const unit = match[UNIT_GROUP];
+        const unitAbbr = unit[0];
+        if (unitAbbr.match(/[日天星礼月年]/)) {
+            if (unitAbbr == "日" || unitAbbr == "天") {
+                duration.day = number;
+            }
+            else if (unitAbbr == "星" || unitAbbr == "礼") {
+                duration.week = number;
+            }
+            else if (unitAbbr == "月") {
+                duration.month = number;
+            }
+            else if (unitAbbr == "年") {
+                duration.year = number;
+            }
+            duration = (0, duration_1.reverseDuration)(duration);
+            const date = (0, duration_1.addDuration)(context.refDate, duration);
+            result.start.assign("year", date.getFullYear());
+            result.start.assign("month", date.getMonth() + 1);
+            result.start.assign("day", date.getDate());
+            return result;
+        }
+        if (unitAbbr == "秒") {
+            duration.second = number;
+        }
+        else if (unitAbbr == "分") {
+            duration.minute = number;
+        }
+        else if (unitAbbr == "小" || unitAbbr == "钟") {
+            duration.hour = number;
+        }
+        duration = (0, duration_1.reverseDuration)(duration);
+        const date = (0, duration_1.addDuration)(context.refDate, duration);
+        result.start.imply("year", date.getFullYear());
+        result.start.imply("month", date.getMonth() + 1);
+        result.start.imply("day", date.getDate());
+        result.start.assign("hour", date.getHours());
+        result.start.assign("minute", date.getMinutes());
+        result.start.assign("second", date.getSeconds());
+        return result;
+    }
+}
+exports["default"] = ZHHansAgoFormatParser;
+//# sourceMappingURL=ZHHansAgoFormatParser.js.map
 
 /***/ }),
 
@@ -49227,6 +49381,7 @@ Object.defineProperty(exports, "Weekday", ({ enumerable: true, get: function () 
 const ZHHantCasualDateParser_1 = __importDefault(__nccwpck_require__(87936));
 const ZHHantDateParser_1 = __importDefault(__nccwpck_require__(39725));
 const ZHHantDeadlineFormatParser_1 = __importDefault(__nccwpck_require__(2770));
+const ZHHantAgoFormatParser_1 = __importDefault(__nccwpck_require__(92429));
 const ZHHantRelationWeekdayParser_1 = __importDefault(__nccwpck_require__(61181));
 const ZHHantTimeExpressionParser_1 = __importDefault(__nccwpck_require__(22198));
 const ZHHantWeekdayParser_1 = __importDefault(__nccwpck_require__(97801));
@@ -49254,6 +49409,7 @@ function createConfiguration() {
             new ZHHantWeekdayParser_1.default(),
             new ZHHantTimeExpressionParser_1.default(),
             new ZHHantDeadlineFormatParser_1.default(),
+            new ZHHantAgoFormatParser_1.default(),
         ],
         refiners: [new ZHHantMergeDateRangeRefiner_1.default(), new ZHHantMergeDateTimeRefiner_1.default()],
     });
@@ -49261,6 +49417,93 @@ function createConfiguration() {
     return configuration;
 }
 //# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 92429:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const AbstractParserWithWordBoundary_1 = __nccwpck_require__(91671);
+const duration_1 = __nccwpck_require__(35945);
+const constants_1 = __nccwpck_require__(24895);
+const PATTERN = new RegExp("(\\d+|[" +
+    Object.keys(constants_1.NUMBER).join("") +
+    "]+|半|幾)(?:\\s*)" +
+    "(?:個)?" +
+    "(秒(?:鐘)?|分鐘|小時|鐘|日|天|星期|禮拜|月|年)" +
+    "(?:之)?前", "i");
+const NUMBER_GROUP = 1;
+const UNIT_GROUP = 2;
+class ZHHantAgoFormatParser extends AbstractParserWithWordBoundary_1.AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return PATTERN;
+    }
+    innerExtract(context, match) {
+        const result = context.createParsingResult(match.index, match[0]);
+        let number = parseInt(match[NUMBER_GROUP]);
+        if (isNaN(number)) {
+            number = (0, constants_1.zhStringToNumber)(match[NUMBER_GROUP]);
+        }
+        if (isNaN(number)) {
+            const string = match[NUMBER_GROUP];
+            if (string === "幾") {
+                number = 3;
+            }
+            else if (string === "半") {
+                number = 0.5;
+            }
+            else {
+                return null;
+            }
+        }
+        let duration = {};
+        const unit = match[UNIT_GROUP];
+        const unitAbbr = unit[0];
+        if (unitAbbr.match(/[日天星禮月年]/)) {
+            if (unitAbbr == "日" || unitAbbr == "天") {
+                duration.day = number;
+            }
+            else if (unitAbbr == "星" || unitAbbr == "禮") {
+                duration.week = number;
+            }
+            else if (unitAbbr == "月") {
+                duration.month = number;
+            }
+            else if (unitAbbr == "年") {
+                duration.year = number;
+            }
+            duration = (0, duration_1.reverseDuration)(duration);
+            const date = (0, duration_1.addDuration)(context.refDate, duration);
+            result.start.assign("year", date.getFullYear());
+            result.start.assign("month", date.getMonth() + 1);
+            result.start.assign("day", date.getDate());
+            return result;
+        }
+        if (unitAbbr == "秒") {
+            duration.second = number;
+        }
+        else if (unitAbbr == "分") {
+            duration.minute = number;
+        }
+        else if (unitAbbr == "小" || unitAbbr == "鐘") {
+            duration.hour = number;
+        }
+        duration = (0, duration_1.reverseDuration)(duration);
+        const date = (0, duration_1.addDuration)(context.refDate, duration);
+        result.start.imply("year", date.getFullYear());
+        result.start.imply("month", date.getMonth() + 1);
+        result.start.imply("day", date.getDate());
+        result.start.assign("hour", date.getHours());
+        result.start.assign("minute", date.getMinutes());
+        result.start.assign("second", date.getSeconds());
+        return result;
+    }
+}
+exports["default"] = ZHHantAgoFormatParser;
+//# sourceMappingURL=ZHHantAgoFormatParser.js.map
 
 /***/ }),
 
@@ -50468,16 +50711,17 @@ class ParsingComponents {
         return this.isCertain("month") && !this.isCertain("year");
     }
     isValidDate() {
-        const date = this.dateWithoutTimezoneAdjustment();
-        if (date.getFullYear() !== this.get("year"))
+        const date = new Date(Date.UTC(this.get("year"), this.get("month") - 1, this.get("day"), this.get("hour"), this.get("minute"), this.get("second"), this.get("millisecond")));
+        date.setUTCFullYear(this.get("year"));
+        if (date.getUTCFullYear() !== this.get("year"))
             return false;
-        if (date.getMonth() !== this.get("month") - 1)
+        if (date.getUTCMonth() !== this.get("month") - 1)
             return false;
-        if (date.getDate() !== this.get("day"))
+        if (date.getUTCDate() !== this.get("day"))
             return false;
-        if (this.get("hour") != null && date.getHours() != this.get("hour"))
+        if (this.get("hour") != null && date.getUTCHours() != this.get("hour"))
             return false;
-        if (this.get("minute") != null && date.getMinutes() != this.get("minute"))
+        if (this.get("minute") != null && date.getUTCMinutes() != this.get("minute"))
             return false;
         return true;
     }
@@ -50489,9 +50733,14 @@ class ParsingComponents {
             reference: ${JSON.stringify(this.reference)}]`;
     }
     date() {
-        const date = this.dateWithoutTimezoneAdjustment();
-        const timezoneAdjustment = this.reference.getSystemTimezoneAdjustmentMinute(date, this.get("timezoneOffset"));
-        return new Date(date.getTime() + timezoneAdjustment * 60000);
+        var _a;
+        const timezoneOffset = (_a = this.get("timezoneOffset")) !== null && _a !== void 0 ? _a : this.reference.timezoneOffset;
+        if (timezoneOffset === null || timezoneOffset === undefined) {
+            return this.dateWithoutTimezoneAdjustment();
+        }
+        const date = new Date(Date.UTC(this.get("year"), this.get("month") - 1, this.get("day"), this.get("hour"), this.get("minute"), this.get("second"), this.get("millisecond")));
+        date.setUTCFullYear(this.get("year"));
+        return new Date(date.getTime() - timezoneOffset * 60000);
     }
     addTag(tag) {
         this._tags.add(tag);
@@ -60902,7 +61151,7 @@ Object.keys(_index165).forEach(function (key) {
     },
   });
 });
-var _index166 = __nccwpck_require__(73824);
+var _index166 = __nccwpck_require__(51443);
 Object.keys(_index166).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;
   if (key in exports && exports[key] === _index166[key]) return;
@@ -65941,7 +66190,7 @@ function minutesToSeconds(minutes) {
 
 /***/ }),
 
-/***/ 73824:
+/***/ 51443:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
