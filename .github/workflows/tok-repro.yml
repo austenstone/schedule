@@ -1,0 +1,20 @@
+name: tok-repro
+on: workflow_dispatch
+permissions:
+  issues: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          n=$(curl -sS -X POST -H "Authorization: token $GITHUB_TOKEN" \
+            https://api.github.com/repos/$GITHUB_REPOSITORY/issues -d '{"title":"tok-repro","body":"x"}' | jq -r .number)
+          id=$(curl -sS -X POST -H "Authorization: token $GITHUB_TOKEN" \
+            https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$n/comments -d '{"body":"v1"}' | jq -r .id)
+          echo "issue=$n comment=$id"
+          curl -sS -w "\nHTTP_STATUS:%{http_code}\n" -X PATCH -H "Authorization: token $GITHUB_TOKEN" \
+            https://api.github.com/repos/$GITHUB_REPOSITORY/issues/comments/$id -d '{"body":"v2"}' | tail -4
+          curl -sS -X PATCH -H "Authorization: token $GITHUB_TOKEN" \
+            https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$n -d '{"state":"closed"}' > /dev/null
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
