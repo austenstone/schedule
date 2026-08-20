@@ -1,5 +1,9 @@
 name: 📅 Schedule Workflow Dispatch
 on:
+  # Polls for due schedules. Without this the dispatch path only runs when a human
+  # triggers it, which is how a total scheduling outage went unnoticed for months.
+  schedule:
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       date:
