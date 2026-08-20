@@ -208,9 +208,3 @@ export const run = async (): Promise<void> => {
   await scheduleRun();
   await summaryWrite();
 };
-
-if (require.main === module) {
-  run().catch((error) => {
-    setFailed(`Action failed: ${error instanceof Error ? error.message : String(error)}`);
-  });
-}

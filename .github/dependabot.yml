@@ -15,16 +15,9 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    # @actions/core and @actions/github v3+ are ESM-only with no `exports.require`,
-    # and ncc (webpack) emits require() into ESM. See vercel/ncc#1163. Unblocking
-    # these means swapping the bundler to esbuild first.
     # TypeScript 7 is the native Go port; its programmatic compiler API isn't stable
     # until 7.1, so ts-jest, ts-node-dev and typescript-eslint (peer `<6.1.0`) break.
     # PR #94 was closed for this reason.
     ignore:
-      - dependency-name: "@actions/core"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@actions/github"
-        update-types: ["version-update:semver-major"]
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]

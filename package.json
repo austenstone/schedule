@@ -4,7 +4,7 @@
   "description": "Schedule GitHub Actions workflows to run at a future date and time",
   "private": true,
   "scripts": {
-    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
+    "build": "ncc build src/main.ts -o dist --source-map --license licenses.txt",
     "test": "jest",
     "lint": "eslint .",
     "dev": "ts-node-dev --respawn src/index.ts"
@@ -39,7 +39,15 @@
       "/dist/"
     ],
     "transform": {
-      "^.+\\.ts$": "ts-jest"
+      "^.+\\.[tj]s$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "module": "CommonJS",
+            "allowJs": true
+          }
+        }
+      ]
     },
     "coverageReporters": [
       "json-summary",
@@ -49,11 +57,15 @@
     "collectCoverage": true,
     "collectCoverageFrom": [
       "./src/**"
-    ]
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(@actions|@octokit|universal-user-agent|before-after-hook)/)"
+    ],
+    "resolver": "<rootDir>/jest.resolver.cjs"
   },
   "dependencies": {
-    "@actions/core": "^1.11.1",
-    "@actions/github": "^6.0.1",
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1",
     "chrono-node": "^2.10.1",
     "date-fns": "^4.4.0"
   },
@@ -64,6 +76,7 @@
     "@vercel/ncc": "^0.45.0",
     "eslint": "^10.8.1",
     "eslint-plugin-jest": "^29.16.1",
+    "globals": "^17.11.0",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.12",
     "ts-node-dev": "^2.0.0",
