@@ -82,12 +82,15 @@ concurrency:
   group: schedule${{ github.event.inputs.date }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   schedule:
     name: 📅 Schedule
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: austenstone/schedule@v1.3
+      - uses: austenstone/schedule@v1
         with:
           github-token: ${{ secrets.TOKEN }}
           date: ${{ github.event.inputs.date }}
@@ -95,6 +98,15 @@ jobs:
           timezone: 'US/Eastern' # US/Central, US/Pacific
           wait-ms: 45000
 ```
+
+The job needs no `GITHUB_TOKEN` permissions of its own because scheduling is done
+with the `TOKEN` secret, so `permissions: {}` is the correct least privilege here.
+
+#### Where schedules are stored
+
+Schedules live in repository variables named `_SCHEDULE_<workflow-id>_<timestamp>_<uuid>`.
+The action creates one when you schedule a workflow and deletes it once the run is
+dispatched, so nothing needs cleaning up by hand.
 
 #### Timezone
 
@@ -181,7 +193,7 @@ Various inputs are defined in [`action.yml`](action.yml):
 | owner | Optional repository owner to run the workflow on. | ${{ github.repository_owner }} |
 | repo | Optional repository name to run the workflow on. | ${{ github.repository }} |
 | timezone | Timezone to use for the schedule | US/Eastern |
-| inputs | Inputs to pass to the workflow |
+| inputs | Inputs to pass to the workflow | ${{ toJson(github.event.inputs) }} |
 | inputs-ignore | Inputs to ignore when passing to the workflow | date,workflow |
 
 <!-- 
