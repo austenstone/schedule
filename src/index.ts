@@ -18,6 +18,54 @@ interface Input {
   inputsIgnore: string;
 }
 
+export interface Schedule {
+  variableName: string;
+  workflow_id: string;
+  date: Date;
+  ref: string;
+  inputs?: Record<string, unknown>;
+}
+
+export const variablePrefix = '_SCHEDULE';
+
+// GitHub rejects variable names containing anything outside [A-Za-z0-9_], so the
+// hyphens randomUUID() produces have to go or every createRepoVariable call 422s.
+export const scheduleVariableName = (workflowId: number | string, date: Date): string =>
+  [variablePrefix, workflowId, date.valueOf(), randomUUID().replace(/-/g, '')].join('_');
+
+export const scheduleVariableValue = (ref: string, inputs?: Record<string, unknown>): string =>
+  `${ref},${inputs ? JSON.stringify(inputs) : ''}`;
+
+export const parseScheduleVariable = (
+  variable: { name: string; value: string },
+  inputsIgnore = ''
+): Schedule => {
+  const parts = variable.name.split('_');
+  const [ref, ...inputsParts] = variable.value.split(',');
+  const inputsJson = inputsParts.join(',');
+  const workflowInputs = inputsJson.trim().length > 0 ? JSON.parse(inputsJson) : undefined;
+  inputsIgnore
+    .split(',')
+    .map((key) => key.trim())
+    .filter(Boolean)
+    .forEach((key) => {
+      if (workflowInputs && key in workflowInputs) delete workflowInputs[key];
+    });
+  return {
+    variableName: variable.name,
+    workflow_id: parts[2],
+    date: new Date(+parts[3]),
+    ref,
+    inputs: workflowInputs,
+  };
+};
+
+export const durationString = (start: Date, end: Date): string => {
+  const duration = intervalToDuration({ start, end });
+  if (Object.values(duration).every((value) => typeof value === 'number' && value <= 0)) return 'NOW!';
+  return 'in ' + Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
+};
+
 const getInputs = (): Input => {
   const result = {} as Input;
   result.owner = getInput("owner");
@@ -66,58 +114,25 @@ export const run = async (): Promise<void> => {
     timeStyle: 'medium',
     timeZone: inputs.timezone || 'UTC',
   });
-  const durationString = (start: Date, end: Date): string => {
-    const duration = intervalToDuration({ start, end })
-    if (Object.values(duration).every((value) => typeof value === 'number' && value <= 0)) return 'NOW!';
-    return 'in ' + Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
-  };
-  const variablePrefix = '_SCHEDULE'
   const workflows = await octokit.paginate(octokit.rest.actions.listRepoWorkflows, {...ownerRepo, per_page: 100});
   const workflow = workflows.find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
   if (!workflow) {
     throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
   }
-  const workflowId = workflow?.id;
-  const variableName = (date: Date): string => [variablePrefix, workflowId, date.valueOf(), randomUUID()].join('_');
-  const variableValue = (ref: string, inputs?: Record<string, unknown>): string => `${ref},${inputs ? JSON.stringify(inputs) : ''}`;
-  const getSchedules = async (): Promise<Array<{
-    variableName: string;
-    workflow_id: string;
-    date: Date;
-    ref: string;
-    inputs?: Record<string, unknown>;
-  }>> => {
-    const schedules = await octokit.paginate(octokit.rest.actions.listRepoVariables, {...ownerRepo, per_page: 100})
-      .then((variables) => {
-        if (!variables) return [];
-        return variables.filter((variable) => variable.name.startsWith(variablePrefix)).map((variable) => {
-          const parts = variable.name.split('_');
-          const [ref, ...inputsParts] = variable.value.split(',');
-          const inputsJson = inputsParts.join(',');
-          const workflowInputs = inputsJson && inputsJson.trim().length > 0 ? JSON.parse(inputsJson) : undefined;
-          const inputsIgnore = inputs.inputsIgnore?.split(',').map((key) => key.trim());
-          inputsIgnore?.forEach((key) => {
-            if (workflowInputs?.[key]) delete workflowInputs[key];
-          });
-          return {
-            variableName: variable.name,
-            workflow_id: parts[2],
-            date: new Date(+parts[3]),
-            ref: ref,
-            inputs: workflowInputs
-          }
-        });
-      });
-    return schedules;
-  };
+  const workflowId = workflow.id;
+  const getSchedules = async (): Promise<Schedule[]> =>
+    octokit.paginate(octokit.rest.actions.listRepoVariables, {...ownerRepo, per_page: 100})
+      .then((variables) => (variables ?? [])
+        .filter((variable) => variable.name.startsWith(variablePrefix))
+        .map((variable) => parseScheduleVariable(variable, inputs.inputsIgnore)));
   const scheduleAdd = async () => {
     if (!inputDate) return;
     info(`🔍 You entered '${inputs.date}' which I assume is '${dateTimeFormatter.format(inputDate)}' your time (${inputs.timezone})`);
     info(`📅 Scheduling ${workflow.name}@${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
     return octokit.rest.actions.createRepoVariable({
       ...ownerRepo,
-      name: variableName(inputDate),
-      value: variableValue(inputs.ref, inputs.inputs),
+      name: scheduleVariableName(workflowId, inputDate),
+      value: scheduleVariableValue(inputs.ref, inputs.inputs),
     }).then(() => {
       info(`✅ Scheduled to run ${durationString(new Date(), inputDate)}!`)
     });
@@ -133,8 +148,8 @@ export const run = async (): Promise<void> => {
     return group('👀 Looking for scheduled workflows to run', async () => {
       do {
         info(`👀 ... It's currently ${new Date().toLocaleTimeString()} and ${_schedules.length} workflows are scheduled to run.`);
-        for (const [index, schedule] of _schedules.entries()) {
-          if (Date.now().valueOf() < schedule.date.valueOf()) continue;
+        const due = _schedules.filter((schedule) => Date.now().valueOf() >= schedule.date.valueOf());
+        for (const schedule of due) {
           const _workflow = workflows.find((workflow) => workflow.id === +schedule.workflow_id);
           info(`🚀 Running ${_workflow?.path || schedule.workflow_id}@ref:${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}`);
 
@@ -152,10 +167,8 @@ export const run = async (): Promise<void> => {
           }).catch((err) => {
             warning(`Failed to run ${_workflow?.path || schedule.workflow_id}@${schedule.ref} set for ${dateTimeFormatter.format(schedule.date)}:\nError: ${err instanceof Error ? err.message : err}`);
           });
-
-          _schedules.splice(index, 1);
         }
-        
+
         if (inputs.waitMs > 0) {
           await new Promise((resolve) => setTimeout(resolve, inputs.waitDelayMs));
         }
@@ -196,7 +209,8 @@ export const run = async (): Promise<void> => {
   await summaryWrite();
 };
 
-run().catch((error) => {
-  setFailed(`Action failed: ${error instanceof Error ? error.message : String(error)}`);
-  throw error;
-});
+if (require.main === module) {
+  run().catch((error) => {
+    setFailed(`Action failed: ${error instanceof Error ? error.message : String(error)}`);
+  });
+}
