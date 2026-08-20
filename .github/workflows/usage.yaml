@@ -18,10 +18,14 @@ concurrency:
   group: schedule${{ github.event.inputs.date }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   schedule:
     name: 📅 Schedule
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/create-github-app-token@v3
         id: app-token

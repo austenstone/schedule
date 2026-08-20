@@ -4,19 +4,34 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v7
         with:
           token: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
 
       - run: npx npm-check-updates -u --target minor
       - run: npm i --legacy-peer-deps
       - run: npm audit fix || true
+
+      # This job commits straight to main, so gate it on the full suite.
+      # An unattended bad bump would otherwise ship a broken dist/ to consumers.
+      - run: npm run lint
+      - run: npm test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run build
 
-      - uses: stefanzweifel/git-auto-commit-action@v7
+      - uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
