@@ -32,6 +32,36 @@ https://github.com/austenstone/schedule/assets/22425467/040aa351-cf1a-40e2-99e9-
 
 Create a workflow (eg: `.github/workflows/schedule.yml`) and copy the [example](#-example) below. Ensure you've setup the [authentication](#-authentication) and [inputs](#%EF%B8%8F-inputs) correctly.
 
+### ⚠️ Runner requirements
+
+`v1.4` and the floating `v1` tag run on the **Node 24** Actions runtime. GitHub-hosted
+runners have defaulted to Node 24 since June 2026, so if you use `ubuntu-latest`,
+`windows-latest`, or `macos-latest` there is nothing to do.
+
+Node 24 is **not** available everywhere, though. Per GitHub's
+[Node 20 deprecation notice](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/),
+it does not support:
+
+| Environment | Status |
+| - | - |
+| macOS 13.4 and older | ❌ Not supported |
+| Self-hosted ARM32 runners | ❌ No official Node 24 build |
+
+If you're on either of those, pin to [`v1.3`](https://github.com/austenstone/schedule/releases/tag/v1.3),
+the last release that runs on `node20`:
+
+```yml
+      - uses: austenstone/schedule@v1.3
+```
+
+Be aware of what you give up: `v1.3` predates the fix for due workflows being
+skipped, so when two or more schedules come due in the same poll it only
+dispatches every other one. The rest wait for the next poll. It is not affected
+by the `v1.3`–`main` scheduling outage fixed in v1.4.
+
+Node 20 is scheduled for removal from GitHub-hosted runners in fall 2026, so
+treat `v1.3` as a stopgap rather than a destination.
+
 ### 🔑 Authentication
 
 #### GitHub App
