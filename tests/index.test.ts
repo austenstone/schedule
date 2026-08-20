@@ -5,6 +5,7 @@ import {
   scheduleVariableValue,
   parseScheduleVariable,
   durationString,
+  findWorkflow,
 } from '../src/index';
 
 // https://docs.github.com/rest/actions/variables#create-a-repository-variable
@@ -123,5 +124,28 @@ describe('durationString', () => {
 
   test('describes how long until a future schedule', () => {
     expect(durationString(start, new Date('2025-01-01T11:30:00Z'))).toContain('30 minutes');
+  });
+});
+
+describe('findWorkflow', () => {
+  const workflows = [
+    { id: 1, name: 'CI', path: '.github/workflows/ci.yml' },
+    { id: 2, name: 'Basic', path: '.github/workflows/basic.yml' },
+  ];
+
+  test('matches on file name, display name and id', () => {
+    expect(findWorkflow(workflows, 'basic.yml')?.id).toBe(2);
+    expect(findWorkflow(workflows, 'CI')?.id).toBe(1);
+    expect(findWorkflow(workflows, '2')?.id).toBe(2);
+  });
+
+  test('matches nothing when no workflow was requested', () => {
+    for (const empty of ['', '   ', undefined as unknown as string]) {
+      expect(findWorkflow(workflows, empty)).toBeUndefined();
+    }
+  });
+
+  test('returns undefined rather than throwing when the workflow is unknown', () => {
+    expect(findWorkflow(workflows, 'nope.yml')).toBeUndefined();
   });
 });

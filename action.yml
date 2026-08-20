@@ -11,8 +11,8 @@ inputs:
     default: ${{ github.token }}
     required: false
   workflow:
-    description: 'Workflow to run at schedule time'
-    required: true
+    description: 'Workflow to run at schedule time. Only required when scheduling.'
+    required: false
   date:
     description: 'Date to run the workflow'
     required: false

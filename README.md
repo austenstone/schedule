@@ -34,7 +34,7 @@ Create a workflow (eg: `.github/workflows/schedule.yml`) and copy the [example](
 
 ### ⚠️ Runner requirements
 
-`v1.4` and the floating `v1` tag run on the **Node 24** Actions runtime. GitHub-hosted
+`v1.5` and the floating `v1` tag run on the **Node 24** Actions runtime. GitHub-hosted
 runners have defaulted to Node 24 since June 2026, so if you use `ubuntu-latest`,
 `windows-latest`, or `macos-latest` there is nothing to do.
 
@@ -215,7 +215,7 @@ Various inputs are defined in [`action.yml`](action.yml):
 | Name | Description | Default |
 | --- | - | - |
 | *github-token* | The GitHub token used to create an authenticated client | ${{ github.token }} |
-| *workflow* | Workflow to run at schedule time |  |
+| *workflow* | Workflow to run at schedule time. Only required when scheduling. |  |
 | date | Date to run the workflow | ${{ github.event.inputs.date }} |
 | wait-ms | Milliseconds to wait | 0 |
 | wait-delay-ms | Milliseconds to wait between checks on the schedule | 20000 |

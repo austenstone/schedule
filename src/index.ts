@@ -60,8 +60,17 @@ export const parseScheduleVariable = (
   };
 };
 
-export const durationString = (start: Date, end: Date): string => {
-  const duration = intervalToDuration({ start, end });
+type WorkflowRef = { id: number; name: string; path: string };
+
+// An empty query would match every workflow via `endsWith('')`, silently picking
+// whichever one happens to be first.
+export const findWorkflow = <T extends WorkflowRef>(workflows: T[], query: string): T | undefined => {
+  const target = query?.trim();
+  if (!target) return undefined;
+  return workflows.find(({ id, name, path }) => path.endsWith(target) || name === target || id === +target);
+};
+
+export const durationString = (start: Date, end: Date): string => {  const duration = intervalToDuration({ start, end });
   if (Object.values(duration).every((value) => typeof value === 'number' && value <= 0)) return 'NOW!';
   return 'in ' + Object.entries(duration).map(([key, value]) => `${value} ${key}`).join(', ');
 };
@@ -91,9 +100,6 @@ const getInputs = (): Input => {
   if (result.waitDelayMs < 0) {
     throw new Error('wait-delay-ms must be a non-negative number');
   }
-  if (!result.workflow) {
-    throw new Error('workflow input is required');
-  }
 
   return result;
 }
@@ -115,23 +121,24 @@ export const run = async (): Promise<void> => {
     timeZone: inputs.timezone || 'UTC',
   });
   const workflows = await octokit.paginate(octokit.rest.actions.listRepoWorkflows, {...ownerRepo, per_page: 100});
-  const workflow = workflows.find((workflow) => workflow.path.endsWith(inputs.workflow) || workflow.name === inputs.workflow || workflow.id === +inputs.workflow);
-  if (!workflow) {
+  // Polling for due schedules doesn't need a target workflow, so only resolve one
+  // when we're actually scheduling. Otherwise a cron-only run can't work at all.
+  const workflow = findWorkflow(workflows, inputs.workflow);
+  if (inputDate && !workflow) {
     throw new Error(`Workflow ${inputs.workflow} not found in ${ownerRepo.owner}/${ownerRepo.repo}`);
   }
-  const workflowId = workflow.id;
   const getSchedules = async (): Promise<Schedule[]> =>
     octokit.paginate(octokit.rest.actions.listRepoVariables, {...ownerRepo, per_page: 100})
       .then((variables) => (variables ?? [])
         .filter((variable) => variable.name.startsWith(variablePrefix))
         .map((variable) => parseScheduleVariable(variable, inputs.inputsIgnore)));
   const scheduleAdd = async () => {
-    if (!inputDate) return;
+    if (!inputDate || !workflow) return;
     info(`🔍 You entered '${inputs.date}' which I assume is '${dateTimeFormatter.format(inputDate)}' your time (${inputs.timezone})`);
     info(`📅 Scheduling ${workflow.name}@${inputs.ref} for ${dateTimeFormatter.format(inputDate)}`);
     return octokit.rest.actions.createRepoVariable({
       ...ownerRepo,
-      name: scheduleVariableName(workflowId, inputDate),
+      name: scheduleVariableName(workflow.id, inputDate),
       value: scheduleVariableValue(inputs.ref, inputs.inputs),
     }).then(() => {
       info(`✅ Scheduled to run ${durationString(new Date(), inputDate)}!`)
