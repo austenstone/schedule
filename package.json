@@ -6,7 +6,7 @@
   "scripts": {
     "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
     "test": "jest",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint .",
     "dev": "ts-node-dev --respawn src/index.ts"
   },
   "keywords": [
@@ -58,20 +58,17 @@
     "date-fns": "^4.4.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.2.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@vercel/ncc": "^0.45.0",
-    "eslint": "^8.57.1",
-    "eslint-plugin-github": "^4.10.2",
-    "eslint-plugin-jest": "^28.14.0",
+    "eslint": "^10.8.1",
+    "eslint-plugin-jest": "^29.16.1",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.12",
-    "ts-loader": "^9.6.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^7.18.0"
+    "typescript-eslint": "^8.67.0"
   },
   "overrides": {
     "undici": "^6.27.0"
