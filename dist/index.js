@@ -37684,6 +37684,11 @@ function addDuration(ref, duration) {
     if ("quarter" in duration) {
         const floor = Math.floor(duration["quarter"]);
         date.setMonth(date.getMonth() + floor * 3);
+        const remainingFraction = duration["quarter"] - floor;
+        if (remainingFraction > 0) {
+            duration.month = duration?.month ?? 0;
+            duration.month += remainingFraction * 3;
+        }
     }
     if ("month" in duration) {
         const floor = Math.floor(duration["month"]);
@@ -38409,7 +38414,7 @@ class ENTimeUnitWithinFormatParser extends AbstractParserWithWordBoundaryCheckin
         return context.option.forwardDate ? PATTERN_WITH_OPTIONAL_PREFIX : PATTERN_WITH_PREFIX;
     }
     innerExtract(context, match) {
-        if (match[0].match(/^for\s*the\s*\w+/)) {
+        if (match[0].match(/^for\s*the\s*\w+/i)) {
             return null;
         }
         const timeUnits = parseDuration(match[1]);
@@ -38671,6 +38676,9 @@ class ENSlashMonthFormatParser extends AbstractParserWithWordBoundaryChecking {
         return ENSlashMonthFormatParser_PATTERN;
     }
     innerExtract(context, match) {
+        if (/\d\/?$/.test(context.text.substring(0, match.index))) {
+            return null;
+        }
         const year = parseInt(match[ENSlashMonthFormatParser_YEAR_GROUP]);
         const month = parseInt(match[MONTH_GROUP]);
         return context.createParsingComponents().imply("day", 1).assign("month", month).assign("year", year);
@@ -39307,9 +39315,12 @@ function mergeDateTimeComponent(dateComponent, timeComponent) {
 
 class AbstractMergeDateTimeRefiner extends MergingRefiner {
     shouldMergeResults(textBetween, currentResult, nextResult) {
-        return (((currentResult.start.isOnlyDate() && nextResult.start.isOnlyTime()) ||
-            (nextResult.start.isOnlyDate() && currentResult.start.isOnlyTime())) &&
-            textBetween.match(this.patternBetween()) != null);
+        const isDateThenTime = currentResult.start.isOnlyDate() && nextResult.start.isOnlyTime();
+        const isTimeThenDate = currentResult.start.isOnlyTime() && nextResult.start.isOnlyDate();
+        if (isTimeThenDate && textBetween.trim() === ":") {
+            return false;
+        }
+        return (isDateThenTime || isTimeThenDate) && textBetween.match(this.patternBetween()) != null;
     }
     mergeResults(textBetween, currentResult, nextResult) {
         const result = currentResult.start.isOnlyDate()
@@ -39703,7 +39714,8 @@ class MergeWeekdayComponentRefiner extends MergingRefiner {
     shouldMergeResults(textBetween, currentResult, nextResult) {
         const weekdayThenNormalDate = currentResult.start.isOnlyWeekdayComponent() &&
             !currentResult.start.isCertain("hour") &&
-            nextResult.start.isCertain("day");
+            nextResult.start.isCertain("day") &&
+            !nextResult.start.tags().has("result/relativeDate");
         return weekdayThenNormalDate && textBetween.match(/^,?\s*$/) != null;
     }
 }
@@ -40283,7 +40295,109 @@ class ENUnlikelyFormatFilter extends Filter {
     }
 }
 //# sourceMappingURL=ENUnlikelyFormatFilter.js.map
+;// CONCATENATED MODULE: ./node_modules/chrono-node/dist/esm/locales/en/refiners/ENEndOfPeriodRefiner.js
+
+const PREFIX_PATTERN = /\b(?:last\s+day|end)\s+of\s+(?:the\s+)?$/i;
+const RELATIVE_PERIOD_PATTERN = /^(this|last|past|next)\s*(week|month|year)$/i;
+const RELATIVE_YEAR_SUFFIX_PATTERN = /^\s+(this|last|past|next)\s+year(?=\W|$)/i;
+function modifierOffset(modifier) {
+    return modifier === "next" ? 1 : modifier === "last" || modifier === "past" ? -1 : 0;
+}
+class ENEndOfPeriodRefiner {
+    refine(context, results) {
+        results.forEach((result) => {
+            const prefix = context.text.substring(0, result.index).match(PREFIX_PATTERN);
+            if (!prefix) {
+                return;
+            }
+            const relativePeriod = result.text.match(RELATIVE_PERIOD_PATTERN);
+            if (relativePeriod) {
+                const modifier = relativePeriod[1].toLowerCase();
+                this.moveToEndOfRelativePeriod(context, result, modifier, relativePeriod[2].toLowerCase());
+            }
+            else if (result.start.isCertain("month") && !result.start.isCertain("day")) {
+                this.moveToEndOfMonth(context, result);
+            }
+            else {
+                return;
+            }
+            result.start.imply("hour", 12);
+            result.start.imply("minute", 0);
+            result.start.imply("second", 0);
+            result.start.imply("millisecond", 0);
+            if (!result.start.isCertain("timezoneOffset")) {
+                result.start.delete("timezoneOffset");
+            }
+            result.index -= prefix[0].length;
+            result.text = prefix[0] + result.text;
+            result.addTag("refiner/ENEndOfPeriodRefiner");
+        });
+        return results;
+    }
+    moveToEndOfRelativePeriod(context, result, modifier, period) {
+        const offset = modifierOffset(modifier);
+        const referenceDate = context.reference.getDateWithAdjustedTimezone();
+        let lastDay;
+        if (period === "week") {
+            lastDay = new Date(referenceDate.getTime());
+            lastDay.setDate(referenceDate.getDate() + (6 - referenceDate.getDay()) + offset * 7);
+        }
+        else if (period === "month") {
+            lastDay = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + offset + 1, 0);
+        }
+        else {
+            lastDay = new Date(referenceDate.getFullYear() + offset, 11, 31);
+        }
+        result.start.assign("day", lastDay.getDate());
+        result.start.assign("month", lastDay.getMonth() + 1);
+        result.start.assign("year", lastDay.getFullYear());
+        result.start.delete("weekday");
+        result.start.imply("weekday", lastDay.getDay());
+    }
+    moveToEndOfMonth(context, result) {
+        let year = result.start.get("year");
+        const month = result.start.get("month");
+        const suffix = context.text.substring(result.index + result.text.length).match(RELATIVE_YEAR_SUFFIX_PATTERN);
+        if (suffix) {
+            const modifier = suffix[1].toLowerCase();
+            const referenceYear = context.reference.getDateWithAdjustedTimezone().getFullYear();
+            year = referenceYear + modifierOffset(modifier);
+            result.start.assign("year", year);
+            result.text += suffix[0];
+        }
+        if (!result.start.isCertain("year")) {
+            const lastDayInReferenceYear = new Date(year, month, 0).getDate();
+            year = findYearClosestToRef(context.reference.getDateWithAdjustedTimezone(), lastDayInReferenceYear, month);
+            result.start.imply("year", year);
+        }
+        result.start.assign("day", new Date(year, month, 0).getDate());
+    }
+}
+//# sourceMappingURL=ENEndOfPeriodRefiner.js.map
+;// CONCATENATED MODULE: ./node_modules/chrono-node/dist/esm/locales/en/parsers/ENEndOfCurrentMonthParser.js
+
+const ENEndOfCurrentMonthParser_PATTERN = /(?:last\s+day|end)\s+of\s+(?:the\s+)?month(?=\W|$)/i;
+class ENEndOfCurrentMonthParser extends AbstractParserWithWordBoundaryChecking {
+    innerPattern() {
+        return ENEndOfCurrentMonthParser_PATTERN;
+    }
+    innerExtract(context) {
+        const targetDate = context.reference.getDateWithAdjustedTimezone();
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth() + 1;
+        const lastDay = new Date(year, month, 0).getDate();
+        const components = context.createParsingComponents();
+        components.assign("day", lastDay);
+        components.assign("month", month);
+        components.assign("year", year);
+        components.addTag("parser/ENEndOfCurrentMonthParser");
+        return components;
+    }
+}
+//# sourceMappingURL=ENEndOfCurrentMonthParser.js.map
 ;// CONCATENATED MODULE: ./node_modules/chrono-node/dist/esm/locales/en/configuration.js
+
+
 
 
 
@@ -40313,9 +40427,11 @@ class ENDefaultConfiguration {
         const option = this.createConfiguration(false, littleEndian);
         option.parsers.push(new ENCasualDateParser());
         option.parsers.push(new ENCasualTimeParser());
+        option.parsers.push(new ENEndOfCurrentMonthParser());
         option.parsers.push(new ENMonthNameParser());
         option.parsers.push(new ENRelativeDateFormatParser());
         option.parsers.push(new ENTimeUnitCasualRelativeFormatParser());
+        option.refiners.unshift(new ENEndOfPeriodRefiner());
         option.refiners.push(new ENUnlikelyFormatFilter());
         return option;
     }

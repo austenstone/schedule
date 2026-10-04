@@ -66,7 +66,7 @@
   "dependencies": {
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
-    "chrono-node": "^2.10.1",
+    "chrono-node": "^2.10.2",
     "date-fns": "^4.4.0"
   },
   "devDependencies": {
