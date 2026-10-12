@@ -117,6 +117,7 @@ permissions: {}
 jobs:
   schedule:
     name: 📅 Schedule
+    if: github.event_name != 'schedule' || contains(toJSON(vars), '"_SCHEDULE_')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -131,6 +132,16 @@ jobs:
 
 The job needs no `GITHUB_TOKEN` permissions of its own because scheduling is done
 with the `TOKEN` secret, so `permissions: {}` is the correct least privilege here.
+
+#### Skipping empty polls
+
+Most hourly polls find nothing to run. The job-level `if:` reads the
+[`vars` context](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#vars-context)
+and skips the job on `schedule` events when no `_SCHEDULE_*` variable exists, so an
+empty poll never starts a runner. Manual `workflow_dispatch` runs always execute.
+
+Drop the `if:` line if you set the `owner` or `repo` inputs to poll a different
+repository, because `vars` only contains this repository's variables.
 
 #### Where schedules are stored
 
