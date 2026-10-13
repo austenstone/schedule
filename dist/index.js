@@ -38891,7 +38891,7 @@ class AbstractTimeExpressionParser {
                 if (hour == 12) {
                     hour = 0;
                     if (!components.isCertain("day")) {
-                        components.imply("day", components.get("day") + 1);
+                        components.addDurationAsImplied({ day: 1 });
                     }
                 }
             }
@@ -38939,7 +38939,7 @@ class AbstractTimeExpressionParser {
             }
         }
         if (components.date().getTime() < result.start.date().getTime()) {
-            components.imply("day", components.get("day") + 1);
+            components.addDurationAsImplied({ day: 1 });
         }
         return components;
     }
@@ -40590,6 +40590,8 @@ function parseDate(text, ref, option) {
 }
 //# sourceMappingURL=index.js.map
 ;// CONCATENATED MODULE: ./node_modules/chrono-node/dist/esm/index.js
+
+
 
 
 
