@@ -28,6 +28,9 @@ permissions:
 jobs:
   schedule:
     name: 📅 Schedule
+    # Schedules are stored as _SCHEDULE_* repo variables. Skip the cron poll when none
+    # exist so an empty poll costs no runner instead of a rounded-up minute.
+    if: github.event_name != 'schedule' || contains(toJSON(vars), '"_SCHEDULE_')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
